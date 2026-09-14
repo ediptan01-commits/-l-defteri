@@ -1,0 +1,46 @@
+name: Olcu Defteri APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Projeyi al
+        uses: actions/checkout@v4
+
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK kur
+        uses: android-actions/setup-android@v3
+
+      - name: Android 36 kur
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Gradle 8.13 kur
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Projeyi çıkart
+        run: |
+          unzip -q olcu-defteri-project.zip -d project
+
+      - name: APK oluştur
+        working-directory: project
+        run: |
+          gradle assembleDebug --no-daemon
+
+      - name: APK'yı hazırla
+        uses: actions/upload-artifact@v4
+        with:
+          name: OlcuDefteri-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
