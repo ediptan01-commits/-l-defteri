@@ -19,8 +19,9 @@ jobs:
 
       - name: Android SDK kur
         uses: android-actions/setup-android@v3
-        with:      
-             packages: ''.       
+        with:
+          packages: ''
+
       - name: Android 36 kur
         run: |
           yes | sdkmanager --licenses || true
