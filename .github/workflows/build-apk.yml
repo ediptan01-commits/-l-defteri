@@ -34,18 +34,15 @@ jobs:
 
       - name: Projeyi çıkart
         run: |
-          mkdir -p project
-          unzip -q OlcuDefteri-Pro-FINAL-v7-BUILD-FIX.zip
+          unzip -q -o OlcuDefteri-Pro-FINAL-v7-BUILD-FIX.zip -d .
+          echo "Proje dosyalari:"
+          ls -la
 
       - name: APK oluştur
         run: |
-          cd project
-          echo "Gradle projesi:"
-          ls -la
           gradle assembleDebug --no-daemon
-
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
         with:
           name: OlcuDefteri-APK-FINAL
-          path: project/**/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
