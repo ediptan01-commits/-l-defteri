@@ -35,7 +35,7 @@ jobs:
       - name: Projeyi çıkart
         run: |
           mkdir -p project
-          unzip -q OlcuDefteri-Pro-FINAL-ICONLU-v1.zip -d project
+          unzip -q OlcuDefteri-Pro-FINAL-v5-UI-PDF-FIX.zip -d project
 
       - name: Gradle projesini bul ve APK oluştur
         run: |
