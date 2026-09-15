@@ -34,7 +34,7 @@ jobs:
 
       - name: Projeyi çıkart
         run: |
-          unzip -q OlcuDefteri-Test-v4.zip -d project
+          unzip -q OlcuDefteri-Test-v8.zip -d project
 
       - name: APK oluştur
         working-directory: project
