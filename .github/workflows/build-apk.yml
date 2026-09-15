@@ -37,11 +37,11 @@ jobs:
           mkdir -p project
           unzip -q OlcuDefteri-Pro-FINAL-v7-BUILD-FIX.zip
 
-      - name: Gradle projesini bul ve APK oluştur
-        run: |
-          PROJECT_DIR=$(find project -name settings.gradle -type f -print -quit | xargs dirname)
-          echo "Gradle projesi: $PROJECT_DIR"
-          cd "$PROJECT_DIR"
+            - name: APK oluştur
+              run: |
+          cd project
+          echo "Gradle projesi:"
+          ls -la
           gradle assembleDebug --no-daemon
 
       - name: APK'yı hazırla
