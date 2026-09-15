@@ -37,8 +37,8 @@ jobs:
           mkdir -p project
           unzip -q OlcuDefteri-Pro-FINAL-v7-BUILD-FIX.zip
 
-            - name: APK oluştur
-              run: |
+      - name: APK oluştur
+        run: |
           cd project
           echo "Gradle projesi:"
           ls -la
