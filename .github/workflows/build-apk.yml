@@ -20,7 +20,7 @@ jobs:
       - name: Android SDK kur
         uses: android-actions/setup-android@v3
         with:
-          packages: ''
+          packages: platform-tools
 
       - name: Android 36 kur
         run: |
