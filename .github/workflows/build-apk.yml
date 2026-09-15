@@ -37,7 +37,7 @@ jobs:
           unzip -q OlcuDefteri-Test-v8.zip -d project
 
       - name: APK oluştur
-        working-directory: project
+        working-directory: project/OlcuDefteri
         run: |
           gradle assembleDebug --no-daemon
 
@@ -45,4 +45,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OlcuDefteri-APK
-          path: project/app/build/outputs/apk/debug/app-debug.apk
+          path: project/OlcuDefteri/app/build/outputs/apk/debug/app-debug.apk
