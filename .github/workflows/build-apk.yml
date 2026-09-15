@@ -19,7 +19,8 @@ jobs:
 
       - name: Android SDK kur
         uses: android-actions/setup-android@v3
-
+        with:      
+             packages: ''.       
       - name: Android 36 kur
         run: |
           yes | sdkmanager --licenses || true
@@ -32,7 +33,7 @@ jobs:
 
       - name: Projeyi çıkart
         run: |
-          unzip -q olcu-defteri-project.zip -d project
+          unzip -q OlcuDefteri-Test-v4.zip -d project
 
       - name: APK oluştur
         working-directory: project
