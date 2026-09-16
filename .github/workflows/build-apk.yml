@@ -37,12 +37,43 @@ jobs:
           unzip -q -o OlcuDefteri-Pro-FINAL-v12-WELCOME.zip -d .
           echo "Proje dosyalari:"
           ls -la
+      - name: Supabase ayarlarını ekle
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          CONFIG=$(find . -type f -name "config.json" | head -n 1)
+          if [ -z "$CONFIG" ]; then
+            echo "config.json bulunamadı"
+            exit 1
+          fi
+          python3 - "$CONFIG" <<'PY'
+          import json
+          import os
+          import sys
+
+          path = sys.argv[1]
+
+          with open(path, "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          data["supabaseUrl"] = os.environ["SUPABASE_URL"]
+          data["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
+          data["redirectUri"] = "olcudefteri://auth-callback"
+
+          with open(path, "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
+
+          print("Supabase ayarlari basariyla eklendi.")
+          PY
 
       - name: APK oluştur
         run: |
           gradle assembleDebug --no-daemon
+
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
         with:
           name: OlcuDefteri-APK-FINAL
           path: app/build/outputs/apk/debug/app-debug.apk
+      
