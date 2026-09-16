@@ -39,10 +39,11 @@ jobs:
           ls -la
       - name: Supabase ayarlarını ekle
         env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-       run: python3 -c 'import json,os; p="app/src/main/assets/config.json"; d=json.load(open(p)); d["supabaseUrl"]=os.environ["SUPABASE_URL"]; d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]; d["redirectUri"]="olcudefteri://auth-callback"; json.dump(d,open(p,"w"),ensure_ascii=False,indent=2)'
-
+         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+         SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: >-
+          python3 -c 'import json,os; p="app/src/main/assets/config.json"; d=json.load(open(p)); d["supabaseUrl"]=os.environ["SUPABASE_URL"]; d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]; d["redirectUri"]="olcudefteri://auth-callback"; json.dump(d,open(p,"w"),ensure_ascii=False,indent=2)'
+ 
       - name: APK oluştur
         run: |
           gradle assembleDebug --no-daemon
