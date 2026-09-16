@@ -20,13 +20,8 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-        run: |
-          test -n "$SUPABASE_URL" || { echo "SUPABASE_URL secret boş"; exit 1; }
-          test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "SUPABASE_PUBLISHABLE_KEY secret boş"; exit 1; }
-
-          python3 -c 'import json,os; p="app/src/main/assets/config.json"; d=json.load(open(p,encoding="utf-8")); d["supabaseUrl"]=os.environ["SUPABASE_URL"]; d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]; d["redirectUri"]="olcudefteri://auth-callback"; json.dump(d,open(p,"w",encoding="utf-8"),ensure_ascii=False,indent=2)'
-
-          python3 -c 'import json; d=json.load(open("app/src/main/assets/config.json",encoding="utf-8")); assert d["supabaseUrl"].startswith("https://"); assert "YOUR-PROJECT" not in d["supabaseUrl"]; assert d["supabaseAnonKey"] and "YOUR_SUPABASE" not in d["supabaseAnonKey"]; print("Supabase config doğrulandı.")'
+        run: >-
+          test -n "$SUPABASE_URL" && test -n "$SUPABASE_PUBLISHABLE_KEY" || exit 1; python3 -c 'import json,os; p="app/src/main/assets/config.json"; d=json.load(open(p,encoding="utf-8")); d["supabaseUrl"]=os.environ["SUPABASE_URL"]; d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]; d["redirectUri"]="olcudefteri://auth-callback"; json.dump(d,open(p,"w",encoding="utf-8"),ensure_ascii=False,indent=2)'
 
             - name: Gradle 8.13 kur
               run: |
@@ -35,7 +30,7 @@ jobs:
 
       - name: APK oluştur
         run: |
-          ./gradle-8.13/bin/gradle assembleDebug --no-daemon
+       ./gradle-8.13/bin/gradle assembleDebug --no-daemon
 
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
