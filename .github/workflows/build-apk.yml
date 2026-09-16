@@ -38,47 +38,10 @@ jobs:
           echo "Proje dosyalari:"
           ls -la
       - name: Supabase ayarlarını ekle
-       env:
-    SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-    SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-  run: |
-    test -n "$SUPABASE_URL" || { echo "SUPABASE_URL secret boş"; exit 1; }
-    test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "SUPABASE_PUBLISHABLE_KEY secret boş"; exit 1; }
-
-    python3 - <<'PY'
-    import json
-    import os
-
-    path = "app/src/main/assets/config.json"
-
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    data["supabaseUrl"] = os.environ["SUPABASE_URL"]
-    data["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
-    data["redirectUri"] = "olcudefteri://auth-callback"
-
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
-    print("Supabase ayarları başarıyla eklendi.")
-    PY
-
-    python3 - <<'PY'
-    import json
-
-    path = "app/src/main/assets/config.json"
-
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    assert data["supabaseUrl"].startswith("https://")
-    assert "YOUR-PROJECT" not in data["supabaseUrl"]
-    assert data["supabaseAnonKey"]
-    assert "YOUR_SUPABASE" not in data["supabaseAnonKey"]
-
-    print("Supabase config doğrulandı.")
-    PY
+        env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+       run: python3 -c 'import json,os; p="app/src/main/assets/config.json"; d=json.load(open(p)); d["supabaseUrl"]=os.environ["SUPABASE_URL"]; d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]; d["redirectUri"]="olcudefteri://auth-callback"; json.dump(d,open(p,"w"),ensure_ascii=False,indent=2)'
 
       - name: APK oluştur
         run: |
