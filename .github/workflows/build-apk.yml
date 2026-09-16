@@ -11,39 +11,37 @@ jobs:
       - name: Depoyu indir
         uses: actions/checkout@v4
 
-      - name: APK oluştur
+      - name: Projeyi çıkart
+        run: |
+          ZIP="OlcuDefteri-Pro-FINAL-v13-CEPHE-DUZENI.zip"
+          test -f "$ZIP" || { echo "ZIP dosyasi bulunamadi: $ZIP"; exit 1; }
+          unzip -q -o "$ZIP" -d .
+          echo "Proje dosyalari:"
+          ls -la
+
+      - name: Supabase ayarlarını ekle
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          set -e
-
-          echo "V12 ZIP aranıyor..."
-          ZIP=$(find . -maxdepth 1 -type f -iname "OlcuDefteri-Pro-FINAL-v12-WELCOME*.zip" | head -n 1)
-
-          if [ -z "$ZIP" ]; then
-            echo "V12 ZIP bulunamadı"
-            exit 1
-          fi
-
-          echo "Bulunan dosya: $ZIP"
-          unzip -q -o "$ZIP" -d .
-
-          echo "Supabase ayarları yazılıyor..."
-          test -n "$SUPABASE_URL"
-          test -n "$SUPABASE_PUBLISHABLE_KEY"
+          test -n "$SUPABASE_URL" || { echo "SUPABASE_URL secret bos"; exit 1; }
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "SUPABASE_PUBLISHABLE_KEY secret bos"; exit 1; }
 
           python3 -c 'import json,os; p="app/src/main/assets/config.json"; d=json.load(open(p,encoding="utf-8")); d["supabaseUrl"]=os.environ["SUPABASE_URL"]; d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]; d["redirectUri"]="olcudefteri://auth-callback"; json.dump(d,open(p,"w",encoding="utf-8"),ensure_ascii=False,indent=2)'
 
-          echo "Gradle 8.13 indiriliyor..."
+          python3 -c 'import json; d=json.load(open("app/src/main/assets/config.json",encoding="utf-8")); assert d["supabaseUrl"].startswith("https://"); assert "YOUR-PROJECT" not in d["supabaseUrl"]; assert d["supabaseAnonKey"] and "YOUR_SUPABASE" not in d["supabaseAnonKey"]; print("Supabase config dogrulandi.")'
+
+      - name: Gradle 8.13 kur
+        run: |
           wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
           unzip -q gradle-8.13-bin.zip
 
-          echo "APK derleniyor..."
+      - name: APK oluştur
+        run: |
           ./gradle-8.13/bin/gradle assembleDebug --no-daemon
 
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-APK-FINAL
+          name: OlcuDefteri-APK-v13
           path: app/build/outputs/apk/debug/app-debug.apk
