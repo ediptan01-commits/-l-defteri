@@ -30,7 +30,7 @@ jobs:
 
       - name: APK oluştur
         run: |
-       ./gradle-8.13/bin/gradle assembleDebug --no-daemon
+         ./gradle-8.13/bin/gradle assembleDebug --no-daemon
 
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
