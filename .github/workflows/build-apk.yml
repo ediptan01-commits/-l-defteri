@@ -28,9 +28,14 @@ jobs:
 
           python3 -c 'import json; d=json.load(open("app/src/main/assets/config.json",encoding="utf-8")); assert d["supabaseUrl"].startswith("https://"); assert "YOUR-PROJECT" not in d["supabaseUrl"]; assert d["supabaseAnonKey"] and "YOUR_SUPABASE" not in d["supabaseAnonKey"]; print("Supabase config doğrulandı.")'
 
+            - name: Gradle 8.13 kur
+              run: |
+                wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
+                unzip -q gradle-8.13-bin.zip
+
       - name: APK oluştur
         run: |
-          gradle assembleDebug --no-daemon
+          ./gradle-8.13/bin/gradle assembleDebug --no-daemon
 
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
