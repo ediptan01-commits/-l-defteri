@@ -38,34 +38,47 @@ jobs:
           echo "Proje dosyalari:"
           ls -la
       - name: Supabase ayarlarını ekle
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
-        run: |
-          CONFIG=$(find . -type f -name "config.json" | head -n 1)
-          if [ -z "$CONFIG" ]; then
-            echo "config.json bulunamadı"
-            exit 1
-          fi
-          python3 - "$CONFIG" <<'PY'
-          import json
-          import os
-          import sys
+       env:
+    SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+    SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+  run: |
+    test -n "$SUPABASE_URL" || { echo "SUPABASE_URL secret boş"; exit 1; }
+    test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "SUPABASE_PUBLISHABLE_KEY secret boş"; exit 1; }
 
-          path = sys.argv[1]
+    python3 - <<'PY'
+    import json
+    import os
 
-          with open(path, "r", encoding="utf-8") as f:
-              data = json.load(f)
+    path = "app/src/main/assets/config.json"
 
-          data["supabaseUrl"] = os.environ["SUPABASE_URL"]
-          data["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
-          data["redirectUri"] = "olcudefteri://auth-callback"
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
 
-          with open(path, "w", encoding="utf-8") as f:
-              json.dump(data, f, ensure_ascii=False, indent=2)
+    data["supabaseUrl"] = os.environ["SUPABASE_URL"]
+    data["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
+    data["redirectUri"] = "olcudefteri://auth-callback"
 
-          print("Supabase ayarlari basariyla eklendi.")
-          PY
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    print("Supabase ayarları başarıyla eklendi.")
+    PY
+
+    python3 - <<'PY'
+    import json
+
+    path = "app/src/main/assets/config.json"
+
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    assert data["supabaseUrl"].startswith("https://")
+    assert "YOUR-PROJECT" not in data["supabaseUrl"]
+    assert data["supabaseAnonKey"]
+    assert "YOUR_SUPABASE" not in data["supabaseAnonKey"]
+
+    print("Supabase config doğrulandı.")
+    PY
 
       - name: APK oluştur
         run: |
