@@ -13,7 +13,7 @@ jobs:
 
       - name: Düzeltilmiş projeyi çıkart
         run: |
-          ZIP="OlcuDefteri-Pro-FINAL-v13-CEPHE-DUZENI-FIXED.zip"
+          ZIP="OlcuDefteri-Pro-v2.0.8-EMAIL-AUTH-FIX.zip"
           test -f "$ZIP" || { echo "FIXED ZIP bulunamadi"; exit 1; }
           unzip -q -o "$ZIP" -d .
 
@@ -36,8 +36,8 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 27" app/build.gradle
-          grep -q 'versionName "2.0.7"' app/build.gradle
+          grep -q "versionCode 28" app/build.gradle
+          grep -q 'versionName "2.0.8"' app/build.gradle
 
       - name: Gradle 8.13 kur
         run: |
@@ -51,5 +51,5 @@ jobs:
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-APK-v2.0.7
+          name: OlcuDefteri-APK-v2.0.8
           path: app/build/outputs/apk/debug/app-debug.apk
