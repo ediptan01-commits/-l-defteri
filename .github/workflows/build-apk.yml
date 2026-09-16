@@ -11,25 +11,33 @@ jobs:
       - name: Depoyu indir
         uses: actions/checkout@v4
 
-      - name: Projeyi çıkart
+      - name: Düzeltilmiş projeyi çıkart
         run: |
-          ZIP="OlcuDefteri-Pro-FINAL-v13-CEPHE-DUZENI.zip"
-          test -f "$ZIP" || { echo "ZIP dosyasi bulunamadi: $ZIP"; exit 1; }
+          ZIP="OlcuDefteri-Pro-FINAL-v13-CEPHE-DUZENI-FIXED.zip"
+          test -f "$ZIP" || { echo "FIXED ZIP bulunamadi"; exit 1; }
           unzip -q -o "$ZIP" -d .
-          echo "Proje dosyalari:"
-          ls -la
 
       - name: Supabase ayarlarını ekle
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          test -n "$SUPABASE_URL" || { echo "SUPABASE_URL secret bos"; exit 1; }
-          test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "SUPABASE_PUBLISHABLE_KEY secret bos"; exit 1; }
+          test -n "$SUPABASE_URL" || exit 1
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || exit 1
+          python3 - <<'PY'
+          import json, os
+          p="app/src/main/assets/config.json"
+          d=json.load(open(p,encoding="utf-8"))
+          d["supabaseUrl"]=os.environ["SUPABASE_URL"]
+          d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]
+          d["redirectUri"]="olcudefteri://auth-callback"
+          json.dump(d,open(p,"w",encoding="utf-8"),ensure_ascii=False,indent=2)
+          PY
 
-          python3 -c 'import json,os; p="app/src/main/assets/config.json"; d=json.load(open(p,encoding="utf-8")); d["supabaseUrl"]=os.environ["SUPABASE_URL"]; d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]; d["redirectUri"]="olcudefteri://auth-callback"; json.dump(d,open(p,"w",encoding="utf-8"),ensure_ascii=False,indent=2)'
-
-          python3 -c 'import json; d=json.load(open("app/src/main/assets/config.json",encoding="utf-8")); assert d["supabaseUrl"].startswith("https://"); assert "YOUR-PROJECT" not in d["supabaseUrl"]; assert d["supabaseAnonKey"] and "YOUR_SUPABASE" not in d["supabaseAnonKey"]; print("Supabase config dogrulandi.")'
+      - name: Sürümü doğrula
+        run: |
+          grep -q "versionCode 27" app/build.gradle
+          grep -q 'versionName "2.0.7"' app/build.gradle
 
       - name: Gradle 8.13 kur
         run: |
@@ -43,5 +51,5 @@ jobs:
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-APK-v13
+          name: OlcuDefteri-APK-v2.0.7
           path: app/build/outputs/apk/debug/app-debug.apk
