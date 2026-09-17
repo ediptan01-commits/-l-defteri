@@ -14,9 +14,9 @@ jobs:
       - name: Projeyi çıkart
         run: |
         
-          ZIP=$(find . -type f -name "OlcuDefteri-Pro-v2.3.1-FINAL.zip" | head -n 1)
+          ZIP="./OlcuDefteri-Pro-v2.3.1-FINAL.zip"
 
-          if [ -z "$ZIP" ]; then
+          if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı"
             find . -type f -name "*.zip"
             exit 1
