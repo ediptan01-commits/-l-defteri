@@ -11,10 +11,10 @@ jobs:
       - name: Depoyu indir
         uses: actions/checkout@v4
 
-      - name: Düzeltilmiş projeyi çıkart
+      - name: Projeyi çıkart
         run: |
-          ZIP="OlcuDefteri-Pro-v2.0.8-EMAIL-AUTH-FIX.zip"
-          test -f "$ZIP" || { echo "FIXED ZIP bulunamadi"; exit 1; }
+          ZIP="OlcuDefteri-Pro-v2.1.0-REAL-AI-UPDATE-FIX.zip"
+          test -f "$ZIP" || { echo "ZIP bulunamadı"; exit 1; }
           unzip -q -o "$ZIP" -d .
 
       - name: Supabase ayarlarını ekle
@@ -24,32 +24,63 @@ jobs:
         run: |
           test -n "$SUPABASE_URL" || exit 1
           test -n "$SUPABASE_PUBLISHABLE_KEY" || exit 1
+
           python3 - <<'PY'
           import json, os
+
           p="app/src/main/assets/config.json"
           d=json.load(open(p,encoding="utf-8"))
+
           d["supabaseUrl"]=os.environ["SUPABASE_URL"]
           d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]
           d["redirectUri"]="olcudefteri://auth-callback"
-          json.dump(d,open(p,"w",encoding="utf-8"),ensure_ascii=False,indent=2)
+
+          json.dump(
+              d,
+              open(p,"w",encoding="utf-8"),
+              ensure_ascii=False,
+              indent=2
+          )
           PY
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 28" app/build.gradle
-          grep -q 'versionName "2.0.8"' app/build.gradle
+          grep -q "versionCode 30" app/build.gradle
+          grep -q 'versionName "2.1.0"' app/build.gradle
+
+      - name: Kalıcı imzalama anahtarını hazırla
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_B64" || {
+            echo "ANDROID_KEYSTORE_BASE64 eksik"
+            exit 1
+          }
+
+          echo "$KEYSTORE_B64" | base64 --decode \
+            > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
+
+          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks"
 
       - name: Gradle 8.13 kur
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
           unzip -q gradle-8.13-bin.zip
 
-      - name: APK oluştur
+      - name: Release APK oluştur
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          ./gradle-8.13/bin/gradle assembleDebug --no-daemon
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || exit 1
+          test -n "$ANDROID_KEY_ALIAS" || exit 1
+          test -n "$ANDROID_KEY_PASSWORD" || exit 1
+
+          ./gradle-8.13/bin/gradle assembleRelease --no-daemon
 
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-APK-v2.0.8
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: OlcuDefteri-APK-v2.1.0-UPDATE
+          path: app/build/outputs/apk/release/app-release.apk
