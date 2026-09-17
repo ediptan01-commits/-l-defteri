@@ -13,7 +13,7 @@ jobs:
 
       - name: Projeyi çıkart
         run: |
-          OlcuDefteri-Pro-v2.2.0-GPLAY.zip
+          ZIP="OlcuDefteri-Pro-v2.2.0-GPLAY.zip"
           test -f "$ZIP" || { echo "ZIP bulunamadı"; exit 1; }
           unzip -q -o "$ZIP" -d .
 
