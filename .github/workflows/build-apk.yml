@@ -13,7 +13,7 @@ jobs:
 
       - name: Projeyi çıkart
         run: |
-          ZIP="OlcuDefteri-Pro-v2.1.0-REAL-AI-UPDATE-FIX.zip"
+          ZIP="OlcuDefteri-Pro-v2.1.1-LOGIN-FIX.zip"
           test -f "$ZIP" || { echo "ZIP bulunamadı"; exit 1; }
           unzip -q -o "$ZIP" -d .
 
@@ -45,8 +45,8 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 30" app/build.gradle
-          grep -q 'versionName "2.1.0"' app/build.gradle
+          grep -q "versionCode 31" app/build.gradle
+          grep -q 'versionName "2.1.1"' app/build.gradle
 
       - name: Kalıcı imzalama anahtarını hazırla
         env:
@@ -82,5 +82,5 @@ jobs:
       - name: APK'yı hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-APK-v2.1.0-UPDATE
+          name: OlcuDefteri-APK-v2.1.1-LOGIN-FIX
           path: app/build/outputs/apk/release/app-release.apk
