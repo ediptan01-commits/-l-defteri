@@ -85,10 +85,10 @@ jobs:
           test -n "$ANDROID_KEY_ALIAS" || exit 1
           test -n "$ANDROID_KEY_PASSWORD" || exit 1
 
-          ./gradle-8.13/bin/gradle assembleRelease --no-daemon
+          ./gradle-8.13/bin/gradle bundleRelease --no-daemon
 
-      - name: APK'yı hazırla
+      - name: AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.3.1
-          path: app/build/outputs/apk/release/app-release.apk
+          name: OlcuDefteri-v2.3.1-AAB
+          path: app/build/outputs/bundle/release/app-release.aab  
