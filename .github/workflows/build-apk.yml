@@ -13,8 +13,16 @@ jobs:
 
       - name: Projeyi çıkart
         run: |
-          ZIP="OlcuDefteri-Pro-v2.3.0-FİNAL.zip"
-          test -f "$ZIP" || { echo "ZIP bulunamadı"; exit 1; }
+        
+          ZIP=$(find . -type f -name "OlcuDefteri-Pro-v2.3.0-FINAL.zip" | head -n 1)
+
+          if [ -z "$ZIP" ]; then
+            echo "ZIP bulunamadı"
+            find . -type f -name "*.zip"
+            exit 1
+          fi
+
+          echo "ZIP bulundu: $ZIP"
           unzip -q -o "$ZIP" -d .
 
       - name: Supabase ayarlarını ekle
