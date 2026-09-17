@@ -53,7 +53,7 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 33" app/build.gradle
+          grep -q "versionCode 34" app/build.gradle
           grep -q 'versionName "2.3.1"' app/build.gradle
 
       - name: Kalıcı imzalama anahtarını hazırla
