@@ -14,7 +14,7 @@ jobs:
       - name: Projeyi çıkart
         run: |
         
-          ZIP="./OlcuDefteri-Pro-v2.3.6-GOOGLE-BUILD-FIX.zip"
+          ZIP="./OlcuDefteri-Pro-v2.3.7-AI-UI-FINAL.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı"
@@ -53,8 +53,8 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 39" app/build.gradle
-          grep -q 'versionName "2.3.6"' app/build.gradle
+          grep -q "versionCode 40" app/build.gradle
+          grep -q 'versionName "2.3.7"' app/build.gradle
 
       - name: Kalıcı imzalama anahtarını hazırla
         env:
@@ -90,10 +90,10 @@ jobs:
       - name: AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.3.6-AAB
+          name: OlcuDefteri-v2.3.7-AAB
           path: app/build/outputs/bundle/release/app-release.aab  
       - name: APK'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.3.6-APK
+          name: OlcuDefteri-v2.3.7-APK
           path: app/build/outputs/apk/release/app-release.apk
