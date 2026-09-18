@@ -14,7 +14,7 @@ jobs:
       - name: Projeyi çıkart
         run: |
         
-          ZIP="./OlcuDefteri-Pro-v2.3.9-GOOGLE-AI-STATUSBAR-FINAL.zip"
+          ZIP="./OlcuDefteri-Pro-v2.3.9-GOOGLE-AI-STATUSBAR-FIXED.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı"
