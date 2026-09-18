@@ -11,13 +11,12 @@ jobs:
       - name: Depoyu indir
         uses: actions/checkout@v4
 
-      - name: Projeyi çıkart
+      - name: 2.4.0 Offline AI projesini çıkart
         run: |
-        
-          ZIP="./OlcuDefteri-Pro-v2.3.9-GOOGLE-AI-STATUSBAR-FIXED.zip"
+          ZIP="./OlcuDefteri-Pro-v2.4.0-OFFLINE-AI-FINAL.zip"
 
           if [ ! -f "$ZIP" ]; then
-            echo "ZIP bulunamadı"
+            echo "ZIP bulunamadı: $ZIP"
             find . -type f -name "*.zip"
             exit 1
           fi
@@ -34,18 +33,19 @@ jobs:
           test -n "$SUPABASE_PUBLISHABLE_KEY" || exit 1
 
           python3 - <<'PY'
-          import json, os
+          import json
+          import os
 
-          p="app/src/main/assets/config.json"
-          d=json.load(open(p,encoding="utf-8"))
+          p = "app/src/main/assets/config.json"
+          d = json.load(open(p, encoding="utf-8"))
 
-          d["supabaseUrl"]=os.environ["SUPABASE_URL"]
-          d["supabaseAnonKey"]=os.environ["SUPABASE_PUBLISHABLE_KEY"]
-          d["redirectUri"]="olcudefteri://auth-callback"
+          d["supabaseUrl"] = os.environ["SUPABASE_URL"]
+          d["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
+          d["redirectUri"] = "olcudefteri://auth-callback"
 
           json.dump(
               d,
-              open(p,"w",encoding="utf-8"),
+              open(p, "w", encoding="utf-8"),
               ensure_ascii=False,
               indent=2
           )
@@ -53,8 +53,9 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 42" app/build.gradle
-          grep -q 'versionName "2.3.9"' app/build.gradle
+          grep -q "versionCode 43" app/build.gradle
+          grep -q 'versionName "2.4.0"' app/build.gradle
+          echo "Sürüm 2.4.0 doğrulandı"
 
       - name: Kalıcı imzalama anahtarını hazırla
         env:
@@ -75,7 +76,7 @@ jobs:
           wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
           unzip -q gradle-8.13-bin.zip
 
-      - name: Release APK oluştur
+      - name: Release APK ve AAB oluştur
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -87,13 +88,10 @@ jobs:
 
           ./gradle-8.13/bin/gradle assembleRelease bundleRelease --no-daemon
 
-      - name: AAB'yi hazırla
+      - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.3.9-AAB
-          path: app/build/outputs/bundle/release/app-release.aab  
-      - name: APK'yi hazırla
-        uses: actions/upload-artifact@v4
-        with:
-          name: OlcuDefteri-v2.3.9-APK
-          path: app/build/outputs/apk/release/app-release.apk
+          name: OlcuDefteri-v2.4.0-OFFLINE-AI
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/bundle/release/app-release.aab
