@@ -11,9 +11,9 @@ jobs:
       - name: Depoyu indir
         uses: actions/checkout@v4
 
-      - name: 2.4.0 Offline AI projesini çıkart
+      - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-Pro-v2.4.0-OFFLINE-AI-FINAL.zip"
+          ZIP="./OlcuDefteri-Pro-v2.4.1-PROJE-ADI-FIX.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
@@ -53,9 +53,9 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 43" app/build.gradle
-          grep -q 'versionName "2.4.0"' app/build.gradle
-          echo "Sürüm 2.4.0 doğrulandı"
+          grep -q "versionCode 44" app/build.gradle
+          grep -q 'versionName "2.4.1"' app/build.gradle
+          echo "Sürüm 2.4.1 doğrulandı"
 
       - name: Kalıcı imzalama anahtarını hazırla
         env:
@@ -91,7 +91,7 @@ jobs:
       - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.4.0-OFFLINE-AI
+          name: name: OlcuDefteri-v2.4.1-PROJE-ADI-FIX
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
