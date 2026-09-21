@@ -13,7 +13,7 @@ jobs:
 
       - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-v2.5.3-PROFESYONEL-KAYNAK.zip"
+          ZIP="./OlcuDefteri-v2.5.3-DEFTER-GRUPLU-KAYNAK.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
@@ -70,7 +70,7 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 48" app/build.gradle
+          grep -q "versionCode 49" app/build.gradle
           grep -q 'versionName "2.5.3"' app/build.gradle
           echo "Sürüm 2.5.3 doğrulandı"
 
@@ -108,7 +108,7 @@ jobs:
       - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.5.3-PROFESYONEL
+          name: OlcuDefteri-v2.5.3-DEFTER-GRUPLU
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
