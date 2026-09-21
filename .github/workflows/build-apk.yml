@@ -53,8 +53,8 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 45" app/build.gradle
-          grep -q 'versionName "2.5.0"' app/build.gradle
+          grep -q "versionCode 46" app/build.gradle
+          grep -q 'versionName "2.5.1"' app/build.gradle
           echo "Sürüm 2.4.1 doğrulandı"
 
       - name: Kalıcı imzalama anahtarını hazırla
@@ -91,7 +91,7 @@ jobs:
       - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.5.0-DEFTER-SAYFA-Cevirme
+          name: OlcuDefteri-v2.5.1-DEFTER-ANA-SAYFA-FIX
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
@@ -99,7 +99,7 @@ jobs:
       - name: Kaynak projeyi yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.5.0-KAYNAK-PROJE
+          name: OlcuDefteri-v2.5.1-KAYNAK-PROJE
           path: |
             app/
             gradle/
