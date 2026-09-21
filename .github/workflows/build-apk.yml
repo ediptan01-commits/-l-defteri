@@ -23,7 +23,24 @@ jobs:
 
           echo "ZIP bulundu: $ZIP"
           unzip -q -o "$ZIP" -d .
+          APP_BUILD=$(find . -type f -path "*/app/build.gradle" | head -n 1)
 
+          if [ -z "$APP_BUILD" ]; then
+            echo "app/build.gradle bulunamadı"
+            find . -type f -name "build.gradle"
+            exit 1
+          fi
+
+          PROJECT_ROOT=$(dirname "$(dirname "$APP_BUILD")")
+          echo "PROJE KÖKÜ: $PROJECT_ROOT"
+
+          if [ "$PROJECT_ROOT" != "." ]; then
+            cp -a "$PROJECT_ROOT"/. .
+          fi
+
+          echo "Proje yapısı hazır:"
+          ls -la
+          ls -la app/src/main/assets
       - name: Supabase ayarlarını ekle
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
