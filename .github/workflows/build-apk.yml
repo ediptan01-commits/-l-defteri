@@ -13,7 +13,7 @@ jobs:
 
       - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-Pro-v2.5.0-DEFTER-SAYFA-Cevirme.zip"
+          ZIP="./OlcuDefteri-Pro-v2.5.1-DEFTER-ANA-SAYFA-FIX.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
