@@ -13,7 +13,7 @@ jobs:
 
       - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-v2.5.3-DEFTER-GRUPLU-KAYNAK.zip"
+          ZIP="./OlcuDefteri-v2.5.3-DEFTER-GRUPLU-KAYNAK-v49.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
@@ -67,61 +67,31 @@ jobs:
               indent=2
           )
           PY
-
-      - name: Sürümü doğrula
+      - name: Proje ve sürümü doğrula
         run: |
-          grep -q "versionCode 49" app/build.gradle
-          grep -q 'versionName "2.5.3"' app/build.gradle
-          echo "Sürüm 2.5.3 doğrulandı"
+          echo "=== BUILD.GRADLE DOSYALARI ==="
+          find . -type f -name "build.gradle" -print
 
-      - name: Kalıcı imzalama anahtarını hazırla
-        env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: |
-          test -n "$KEYSTORE_B64" || {
-            echo "ANDROID_KEYSTORE_BASE64 eksik"
+          echo "=== VERSION BİLGİLERİ ==="
+          find . -type f -name "build.gradle" -exec grep -Hn "versionCode\|versionName" {} \;
+
+          BUILD_FILE=$(find . -type f -path "*/app/build.gradle" | head -n 1)
+
+          if [ -z "$BUILD_FILE" ]; then
+            echo "app/build.gradle bulunamadı"
+            exit 1
+          fi
+
+          echo "KONTROL EDİLEN DOSYA: $BUILD_FILE"
+
+          grep -q "versionCode 49" "$BUILD_FILE" || {
+            echo "HATA: versionCode 49 bulunamadı"
             exit 1
           }
 
-          echo "$KEYSTORE_B64" | base64 --decode \
-            > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
+          grep -q 'versionName "2.5.3"' "$BUILD_FILE" || {
+            echo "HATA: versionName 2.5.3 bulunamadı"
+            exit 1
+          }
 
-          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks"
-
-      - name: Gradle 8.13 kur
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
-          unzip -q gradle-8.13-bin.zip
-
-      - name: Release APK ve AAB oluştur
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          test -n "$ANDROID_KEYSTORE_PASSWORD" || exit 1
-          test -n "$ANDROID_KEY_ALIAS" || exit 1
-          test -n "$ANDROID_KEY_PASSWORD" || exit 1
-
-          ./gradle-8.13/bin/gradle assembleRelease bundleRelease --no-daemon
-
-      - name: APK ve AAB'yi hazırla
-        uses: actions/upload-artifact@v4
-        with:
-          name: OlcuDefteri-v2.5.3-DEFTER-GRUPLU
-          path: |
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/bundle/release/app-release.aab
-
-      - name: Kaynak projeyi yükle
-        uses: actions/upload-artifact@v4
-        with:
-          name: OlcuDefteri-v2.5.3-KAYNAK-PROJE
-          path: |
-            app/
-            gradle/
-            build.gradle
-            settings.gradle
-            gradle.properties
-            gradlew
-            gradlew.bat
+          echo "Sürüm 2.5.3 / versionCode 49 doğrulandı."
