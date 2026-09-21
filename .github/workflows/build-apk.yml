@@ -99,7 +99,7 @@ jobs:
       - name: Kaynak projeyi yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.5.0-DEFTER-SAYFA-Cevirme
+          name: OlcuDefteri-v2.5.0-KAYNAK-PROJE
           path: |
             app/
             gradle/
