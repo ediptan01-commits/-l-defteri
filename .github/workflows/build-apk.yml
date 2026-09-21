@@ -13,7 +13,7 @@ jobs:
 
       - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-Pro-v2.5.2-DEFTER-GERCEK-SAYFA-FIX.zip"
+          ZIP="./OlcuDefteri-v2.5.3-PROFESYONEL-KAYNAK.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
@@ -70,9 +70,9 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 47" app/build.gradle
-          grep -q 'versionName "2.5.2"' app/build.gradle
-          echo "Sürüm 2.5.2 doğrulandı"
+          grep -q "versionCode 48" app/build.gradle
+          grep -q 'versionName "2.5.3"' app/build.gradle
+          echo "Sürüm 2.5.3 doğrulandı"
 
       - name: Kalıcı imzalama anahtarını hazırla
         env:
@@ -108,7 +108,7 @@ jobs:
       - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.5.2-DEFTER-GERCEK-SAYFA-FIX
+          name: OlcuDefteri-v2.5.3-PROFESYONEL
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
@@ -116,7 +116,7 @@ jobs:
       - name: Kaynak projeyi yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.5.2-KAYNAK-PROJE
+          name: OlcuDefteri-v2.5.3-KAYNAK-PROJE
           path: |
             app/
             gradle/
