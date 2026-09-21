@@ -55,7 +55,7 @@ jobs:
         run: |
           grep -q "versionCode 46" app/build.gradle
           grep -q 'versionName "2.5.1"' app/build.gradle
-          echo "Sürüm 2.4.1 doğrulandı"
+          echo "Sürüm 2.5.1 doğrulandı"
 
       - name: Kalıcı imzalama anahtarını hazırla
         env:
