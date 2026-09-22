@@ -13,7 +13,7 @@ jobs:
 
       - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-v2.5.3-DEFTER-GRUPLU-KAYNAK-v49.zip"
+          ZIP="./OlcuDefteri-v2.5.3-PROJE-OZETI-KUTULAR-v49.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
@@ -129,7 +129,7 @@ jobs:
       - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.5.3-DEFTER-GRUPLU
+          name: OlcuDefteri-v2.5.3-PROJE-OZETI-KUTULAR
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
