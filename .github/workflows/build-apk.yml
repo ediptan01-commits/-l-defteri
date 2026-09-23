@@ -13,7 +13,7 @@ jobs:
 
       - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-v2.6.1-YEREL-AI-COKME-DUZELTILDI.zip"
+          ZIP="./OlcuDefteri-v2.6.2-YEREL-AI-IZOLE-COKME-KORUMALI.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"8
@@ -84,17 +84,17 @@ jobs:
 
           echo "KONTROL EDİLEN DOSYA: $BUILD_FILE"
 
-          grep -q "versionCode 51" "$BUILD_FILE" || {
-            echo "HATA: versionCode 51 bulunamadı"
+          grep -q "versionCode 52" "$BUILD_FILE" || {
+            echo "HATA: versionCode 52 bulunamadı"
             exit 1
           }
 
-          grep -q 'versionName "2.6.1"' "$BUILD_FILE" || {
-            echo "HATA: versionName 2.6.1 bulunamadı"
+          grep -q 'versionName "2.6.2"' "$BUILD_FILE" || {
+            echo "HATA: versionName 2.6.2 bulunamadı"
             exit 1
           }
 
-          echo "Sürüm 2.5.3 / versionCode 51 doğrulandı."
+          echo "Sürüm 2.5.3 / versionCode 52 doğrulandı."
       - name: Kalıcı olarak uygulanması anahtarını hazırla
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -129,7 +129,7 @@ jobs:
       - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.6.1-YEREL-AI-COKME-DUZELTILDI
+          name: name: OlcuDefteri-v2.6.2-YEREL-AI-IZOLE-COKME-KORUMALI
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
@@ -137,7 +137,7 @@ jobs:
       - name: Kaynak projeyi yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.6.1-KAYNAK-PROJE
+          name: OlcuDefteri-v2.6.2-KAYNAK-PROJE
           path: |
             app/
             gradle/
