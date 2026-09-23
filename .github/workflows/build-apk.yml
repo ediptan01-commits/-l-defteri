@@ -13,7 +13,7 @@ jobs:
 
       - name: 2.4.1 Offline AI projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-v2.5.3-COKME-KORUMALI-v49.zip"
+          ZIP="./OlcuDefteri-v2.5.3-BASLIK-DUZELTILDI.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"8
