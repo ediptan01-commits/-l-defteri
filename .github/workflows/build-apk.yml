@@ -129,7 +129,7 @@ jobs:
       - name: APK ve AAB'yi hazırla
         uses: actions/upload-artifact@v4
         with:
-          name: name: OlcuDefteri-v2.6.2-YEREL-AI-IZOLE-COKME-KORUMALI
+          name: OlcuDefteri-v2.6.2-YEREL-AI-IZOLE-COKME-KORUMALI
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
