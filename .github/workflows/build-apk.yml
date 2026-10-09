@@ -1,4 +1,5 @@
-name: Ölçü Defteri APK
+
+name: Ölçü Defteri 2.7.2 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -11,91 +12,84 @@ jobs:
       - name: Depoyu indir
         uses: actions/checkout@v4
 
-      - name: 2.4.1 Offline AI projesini çıkart
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 2.7.2 kaynak projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-v2.7.1-AKILLI-SANTIYE-PRO-ABONELIK-FIX.zip"
+          ZIP="./OlcuDefteri-v2.7.2-FUGA-SOVE-KAT-SILMESI.zip"
 
           if [ ! -f "$ZIP" ]; then
-            echo "ZIP bulunamadı: $ZIP"8
-            find . -type f -name "*.zip"
+            echo "ZIP bulunamadı: $ZIP"
+            ls -la
             exit 1
           fi
 
-          echo "ZIP bulundu: $ZIP"
           unzip -q -o "$ZIP" -d .
-          APP_BUILD=$(find . -type f -path "*/app/build.gradle" | head -n 1)
 
-          if [ -z "$APP_BUILD" ]; then
+          test -f app/build.gradle || {
             echo "app/build.gradle bulunamadı"
-            find . -type f -name "build.gradle"
+            find . -name build.gradle
             exit 1
-          fi
+          }
 
-          PROJECT_ROOT=$(dirname "$(dirname "$APP_BUILD")")
-          echo "PROJE KÖKÜ: $PROJECT_ROOT"
+          test -f app/src/main/assets/config.json || {
+            echo "config.json bulunamadı"
+            exit 1
+          }
 
-          if [ "$PROJECT_ROOT" != "." ]; then
-            cp -a "$PROJECT_ROOT"/. .
-          fi
+          echo "Kaynak proje hazır."
 
-          echo "Proje yapısı hazır:"
-          ls -la
-          ls -la app/src/main/assets
       - name: Supabase ayarlarını ekle
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          test -n "$SUPABASE_URL" || exit 1
-          test -n "$SUPABASE_PUBLISHABLE_KEY" || exit 1
+          test -n "$SUPABASE_URL" || {
+            echo "SUPABASE_URL eksik"
+            exit 1
+          }
+
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || {
+            echo "SUPABASE_PUBLISHABLE_KEY eksik"
+            exit 1
+          }
 
           python3 - <<'PY'
           import json
           import os
 
           p = "app/src/main/assets/config.json"
-          d = json.load(open(p, encoding="utf-8"))
 
-          d["supabaseUrl"] = os.environ["SUPABASE_URL"]
-          d["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
-          d["redirectUri"] = "olcudefteri://auth-callback"
+          with open(p, encoding="utf-8") as f:
+              data = json.load(f)
 
-          json.dump(
-              d,
-              open(p, "w", encoding="utf-8"),
-              ensure_ascii=False,
-              indent=2
-          )
+          data["supabaseUrl"] = os.environ["SUPABASE_URL"]
+          data["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
+          data["redirectUri"] = "olcudefteri://auth-callback"
+
+          with open(p, "w", encoding="utf-8") as f:
+              json.dump(data, f, ensure_ascii=False, indent=2)
           PY
-      - name: Proje ve sürümü doğrula
+
+      - name: Sürümü doğrula
         run: |
-          echo "=== BUILD.GRADLE DOSYALARI ==="
-          find . -type f -name "build.gradle" -print
-
-          echo "=== VERSION BİLGİLERİ ==="
-          find . -type f -name "build.gradle" -exec grep -Hn "versionCode\|versionName" {} \;
-
-          BUILD_FILE=$(find . -type f -path "*/app/build.gradle" | head -n 1)
-
-          if [ -z "$BUILD_FILE" ]; then
-            echo "app/build.gradle bulunamadı"
-            exit 1
-          fi
-
-          echo "KONTROL EDİLEN DOSYA: $BUILD_FILE"
-
-          grep -q "versionCode 55" "$BUILD_FILE" || {
-            echo "HATA: versionCode 55 bulunamadı"
+          grep -q "versionCode 56" app/build.gradle || {
+            echo "HATA: versionCode 56 bulunamadı"
             exit 1
           }
 
-          grep -q 'versionName "2.7.1"' "$BUILD_FILE" || {
-            echo "HATA: versionName 2.7.1 bulunamadı"
+          grep -q 'versionName "2.7.2"' app/build.gradle || {
+            echo "HATA: versionName 2.7.2 bulunamadı"
             exit 1
           }
 
-          echo "Sürüm 2.5.3 / versionCode 55 doğrulandı."
-      - name: Kalıcı olarak uygulanması anahtarını hazırla
+          echo "Sürüm 2.7.2 doğrulandı."
+
+      - name: İmzalama anahtarını hazırla
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
@@ -104,17 +98,20 @@ jobs:
             exit 1
           }
 
-          echo "$KEYSTORE_B64" | base64 --decode \
+          printf '%s' "$KEYSTORE_B64" | base64 --decode \
             > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
 
-          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks"
+          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks" || {
+            echo "İmzalama anahtarı oluşturulamadı"
+            exit 1
+          }
 
-      - name: Gradle 8.13 kursu
+      - name: Gradle 8.13 kur
         run: |
           wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
           unzip -q gradle-8.13-bin.zip
 
-      - name: APK ve AAB sürümlerini oluştur
+      - name: APK ve AAB oluştur
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -126,23 +123,16 @@ jobs:
 
           ./gradle-8.13/bin/gradle assembleRelease bundleRelease --no-daemon
 
-      - name: APK ve AAB'yi hazırla
+      - name: APK dosyasını yayımla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.1-APK
-          path: |
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/bundle/release/app-release.aab
+          name: OlcuDefteri-v2.7.2-APK
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
 
-      - name: Kaynak projeyi yükle
+      - name: AAB dosyasını yayımla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.1-KAYNAK-PROJE
-          path: |
-            app/
-            gradle/
-            build.gradle
-            settings.gradle
-            gradle.properties
-            gradlew
-            gradlew.bat
+          name: OlcuDefteri-v2.7.2-AAB
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
