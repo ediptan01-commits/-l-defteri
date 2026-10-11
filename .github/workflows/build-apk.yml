@@ -20,7 +20,7 @@ jobs:
 
       - name: 2.7.2 kaynak projesini çıkart
         run: |
-          ZIP="./OlcuDefteri-v2.7.2-FUGA-SOVE-KAT-SILMESI.zip"
+          OlcuDefteri-v2.7.3-PRO-MERKEZ-FIX.zip
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
@@ -78,12 +78,12 @@ jobs:
       - name: Sürümü doğrula
         run: |
           grep -q "versionCode 56" app/build.gradle || {
-            echo "HATA: versionCode 56 bulunamadı"
+            echo "HATA: versionCode 57 bulunamadı"
             exit 1
           }
 
-          grep -q 'versionName "2.7.2"' app/build.gradle || {
-            echo "HATA: versionName 2.7.2 bulunamadı"
+          grep -q 'versionName "2.7.3"' app/build.gradle || {
+            echo "HATA: versionName 2.7.3 bulunamadı"
             exit 1
           }
 
@@ -126,13 +126,13 @@ jobs:
       - name: APK dosyasını yayımla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.2-APK
+          name: OlcuDefteri-v2.7.3-APK
           path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
 
       - name: AAB dosyasını yayımla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.2-AAB
+          name: OlcuDefteri-v2.7.3-AAB
           path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
