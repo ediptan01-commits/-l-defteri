@@ -1,5 +1,5 @@
 
-name: Ölçü Defteri 2.7.2 - APK ve AAB
+name: Ölçü Defteri 2.7.3 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: 2.7.2 kaynak projesini çıkart
+      - name: 2.7.3 kaynak projesini çıkart
         run: |
           OlcuDefteri-v2.7.3-PRO-MERKEZ-FIX.zip
 
