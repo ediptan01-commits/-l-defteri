@@ -18,9 +18,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+     
       - name: 2.7.3 kaynak projesini çıkart
         run: |
-          OlcuDefteri-v2.7.3-PRO-MERKEZ-FIX.zip
+          ZIP="./OlcuDefteri-v2.7.3-PRO-MERKEZ-FIX.zip"
 
           if [ ! -f "$ZIP" ]; then
             echo "ZIP bulunamadı: $ZIP"
@@ -42,6 +43,7 @@ jobs:
           }
 
           echo "Kaynak proje hazır."
+
 
       - name: Supabase ayarlarını ekle
         env:
