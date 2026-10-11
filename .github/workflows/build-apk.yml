@@ -79,7 +79,7 @@ jobs:
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 56" app/build.gradle || {
+          grep -q "versionCode 57" app/build.gradle || {
             echo "HATA: versionCode 57 bulunamadı"
             exit 1
           }
