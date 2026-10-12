@@ -1,4 +1,3 @@
-
 name: Ölçü Defteri 2.7.3 - APK ve AAB
 
 on:
@@ -18,8 +17,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-     
-      - name: 2.7.3 kaynak projesini çıkart
+      - name: 2.7.3 kaynak projesini çıkart ve düzelt
         run: |
           ZIP="./OlcuDefteri-v2.7.3-PRO-MERKEZ-FIX.zip"
 
@@ -42,71 +40,69 @@ jobs:
             exit 1
           }
 
-          echo "Kaynak proje hazır."
+          BILLING_TARGET="$(find app/src/main/java -name BillingManager.java -print -quit)"
+          test -n "$BILLING_TARGET" || {
+            echo "BillingManager.java bulunamadı"
+            exit 1
+          }
+          cp BillingManager.java "$BILLING_TARGET"
 
+          python3 - <<'PY'
+          import re
+
+          path = "app/build.gradle"
+          with open(path, encoding="utf-8") as f:
+              source = f.read()
+
+          source, code_count = re.subn(r"versionCode\s+\d+", "versionCode 57", source, count=1)
+          source, name_count = re.subn(
+              r"versionName\s+['\"][^'\"]+['\"]",
+              'versionName "2.7.3"',
+              source,
+              count=1,
+          )
+          if code_count != 1 or name_count != 1:
+              raise SystemExit("versionCode/versionName satırları güvenle güncellenemedi")
+
+          with open(path, "w", encoding="utf-8") as f:
+              f.write(source)
+          PY
 
       - name: Supabase ayarlarını ekle
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
-          test -n "$SUPABASE_URL" || {
-            echo "SUPABASE_URL eksik"
-            exit 1
-          }
-
-          test -n "$SUPABASE_PUBLISHABLE_KEY" || {
-            echo "SUPABASE_PUBLISHABLE_KEY eksik"
-            exit 1
-          }
+          test -n "$SUPABASE_URL" || { echo "SUPABASE_URL eksik"; exit 1; }
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "SUPABASE_PUBLISHABLE_KEY eksik"; exit 1; }
 
           python3 - <<'PY'
           import json
           import os
 
           p = "app/src/main/assets/config.json"
-
           with open(p, encoding="utf-8") as f:
               data = json.load(f)
-
           data["supabaseUrl"] = os.environ["SUPABASE_URL"]
           data["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
           data["redirectUri"] = "olcudefteri://auth-callback"
-
           with open(p, "w", encoding="utf-8") as f:
               json.dump(data, f, ensure_ascii=False, indent=2)
           PY
 
       - name: Sürümü doğrula
         run: |
-          grep -q "versionCode 57" app/build.gradle || {
-            echo "HATA: versionCode 57 bulunamadı"
-            exit 1
-          }
-
-          grep -q 'versionName "2.7.3"' app/build.gradle || {
-            echo "HATA: versionName 2.7.3 bulunamadı"
-            exit 1
-          }
-
-          echo "Sürüm 2.7.2 doğrulandı."
+          grep -q "versionCode 57" app/build.gradle || { echo "HATA: versionCode 57 bulunamadı"; exit 1; }
+          grep -q 'versionName "2.7.3"' app/build.gradle || { echo "HATA: versionName 2.7.3 bulunamadı"; exit 1; }
+          echo "Sürüm 2.7.3 (versionCode 57) doğrulandı."
 
       - name: İmzalama anahtarını hazırla
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          test -n "$KEYSTORE_B64" || {
-            echo "ANDROID_KEYSTORE_BASE64 eksik"
-            exit 1
-          }
-
-          printf '%s' "$KEYSTORE_B64" | base64 --decode \
-            > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
-
-          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks" || {
-            echo "İmzalama anahtarı oluşturulamadı"
-            exit 1
-          }
+          test -n "$KEYSTORE_B64" || { echo "ANDROID_KEYSTORE_BASE64 eksik"; exit 1; }
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
+          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks" || { echo "İmzalama anahtarı oluşturulamadı"; exit 1; }
 
       - name: Gradle 8.13 kur
         run: |
@@ -122,7 +118,6 @@ jobs:
           test -n "$ANDROID_KEYSTORE_PASSWORD" || exit 1
           test -n "$ANDROID_KEY_ALIAS" || exit 1
           test -n "$ANDROID_KEY_PASSWORD" || exit 1
-
           ./gradle-8.13/bin/gradle assembleRelease bundleRelease --no-daemon
 
       - name: APK dosyasını yayımla
