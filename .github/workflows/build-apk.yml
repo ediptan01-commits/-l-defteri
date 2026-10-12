@@ -65,8 +65,6 @@ jobs:
               json.dump(config, f, ensure_ascii=False, indent=2)
           PY
 
-      - name: Android SDK araçlarını kur
-        uses: android-actions/setup-android@v3
 
       - name: Android SDK lisanslarını kabul et ve gerekli paketleri kur
         shell: bash
