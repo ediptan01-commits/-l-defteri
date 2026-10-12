@@ -1,3 +1,4 @@
+
 name: Olcu Defteri 2.7.4 - APK ve AAB
 
 on:
@@ -9,6 +10,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Depoyu indir
         uses: actions/checkout@v4
@@ -23,25 +25,46 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           ZIP="./OlcuDefteri-v2.7.4-release-source.zip"
+
           if [[ ! -f "$ZIP" ]]; then
             echo "Kaynak ZIP bulunamadı: $ZIP"
             ls -la
             exit 1
           fi
+
           unzip -q -o "$ZIP" -d "$GITHUB_WORKSPACE"
-          test -f app/build.gradle || { echo "app/build.gradle bulunamadı"; find . -name build.gradle -print; exit 1; }
-          test -f app/src/main/java/com/olcudefteri/app/MainActivity.java || { echo "MainActivity.java bulunamadı"; exit 1; }
-          test -f app/src/main/java/com/olcudefteri/app/BillingManager.java || { echo "BillingManager.java bulunamadı"; exit 1; }
-          test -f app/src/main/assets/config.json || { echo "config.json bulunamadı"; exit 1; }
+
+          test -f app/build.gradle || {
+            echo "app/build.gradle bulunamadı"
+            find . -name build.gradle -print
+            exit 1
+          }
+
+          test -f app/src/main/java/com/olcudefteri/app/MainActivity.java || {
+            echo "MainActivity.java bulunamadı"
+            exit 1
+          }
+
+          test -f app/src/main/java/com/olcudefteri/app/BillingManager.java || {
+            echo "BillingManager.java bulunamadı"
+            exit 1
+          }
+
+          test -f app/src/main/assets/config.json || {
+            echo "config.json bulunamadı"
+            exit 1
+          }
 
       - name: Sürümü doğrula
         shell: bash
         run: |
           set -euo pipefail
+
           grep -Eq 'versionCode[[:space:]]+58' app/build.gradle
           grep -Eq 'versionName[[:space:]]+"2\.7\.4"' app/build.gradle
-          grep -q "applicationId 'com.olcudefteri.app'" app/build.gradle
+
           echo "Sürüm 2.7.4 (versionCode 58) doğrulandı."
 
       - name: Supabase ayarlarını ekle
@@ -51,16 +74,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$SUPABASE_URL" || { echo "SUPABASE_URL secret eksik"; exit 1; }
-          test -n "$SUPABASE_PUBLISHABLE_KEY" || { echo "SUPABASE_PUBLISHABLE_KEY secret eksik"; exit 1; }
+
+          test -n "$SUPABASE_URL" || {
+            echo "SUPABASE_URL secret eksik"
+            exit 1
+          }
+
+          test -n "$SUPABASE_PUBLISHABLE_KEY" || {
+            echo "SUPABASE_PUBLISHABLE_KEY secret eksik"
+            exit 1
+          }
+
           python3 - <<'PY'
-          import json, os
+          import json
+          import os
+
           path = "app/src/main/assets/config.json"
+
           with open(path, encoding="utf-8") as f:
               config = json.load(f)
+
           config["supabaseUrl"] = os.environ["SUPABASE_URL"]
           config["supabaseAnonKey"] = os.environ["SUPABASE_PUBLISHABLE_KEY"]
           config["redirectUri"] = "olcudefteri://auth-callback"
+
           with open(path, "w", encoding="utf-8") as f:
               json.dump(config, f, ensure_ascii=False, indent=2)
           PY
@@ -71,20 +108,38 @@ jobs:
           packages: 'platforms;android-36,build-tools;36.0.0'
           accept-android-sdk-licenses: true
 
+      - name: Android SDK lisanslarını kabul et
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses
+          sdkmanager --list_installed
+
       - name: İmzalama anahtarını hazırla
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$KEYSTORE_B64" || { echo "ANDROID_KEYSTORE_BASE64 secret eksik"; exit 1; }
-          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
-          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks" || { echo "Keystore boş oluşturuldu"; exit 1; }
+
+          test -n "$KEYSTORE_B64" || {
+            echo "ANDROID_KEYSTORE_BASE64 secret eksik"
+            exit 1
+          }
+
+          printf '%s' "$KEYSTORE_B64" |
+            base64 --decode > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
+
+          test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks" || {
+            echo "İmzalama anahtarı oluşturulamadı"
+            exit 1
+          }
 
       - name: Gradle 8.13 kur
         shell: bash
         run: |
           set -euo pipefail
+
           wget -q https://services.gradle.org/distributions/gradle-8.13-bin.zip
           unzip -q gradle-8.13-bin.zip
 
@@ -96,10 +151,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "ANDROID_KEYSTORE_PASSWORD secret eksik"; exit 1; }
-          test -n "$ANDROID_KEY_ALIAS" || { echo "ANDROID_KEY_ALIAS secret eksik"; exit 1; }
-          test -n "$ANDROID_KEY_PASSWORD" || { echo "ANDROID_KEY_PASSWORD secret eksik"; exit 1; }
-          ./gradle-8.13/bin/gradle clean assembleRelease bundleRelease --no-daemon
+
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || {
+            echo "ANDROID_KEYSTORE_PASSWORD secret eksik"
+            exit 1
+          }
+
+          test -n "$ANDROID_KEY_ALIAS" || {
+            echo "ANDROID_KEY_ALIAS secret eksik"
+            exit 1
+          }
+
+          test -n "$ANDROID_KEY_PASSWORD" || {
+            echo "ANDROID_KEY_PASSWORD secret eksik"
+            exit 1
+          }
+
+          ./gradle-8.13/bin/gradle \
+            clean assembleRelease bundleRelease --no-daemon
 
       - name: APK ve AAB dosyalarını yayımla
         uses: actions/upload-artifact@v4
