@@ -51,31 +51,49 @@ jobs:
             "platform-tools" \
             "platforms;android-36" \
             "build-tools;36.0.0"
-      
-
       - name: Proje dosyalarını kontrol et
         shell: bash
         run: |
           set -euo pipefail
 
-          test -f app/build.gradle
-          test -f settings.gradle
-          test -f build.gradle
-          test -f gradlew
+          echo "Depodaki dosyalar:"
+          ls -la
+          find . -maxdepth 3 \( \
+            -name "build.gradle" -o \
+            -name "build.gradle.kts" -o \
+            -name "gradlew" -o \
+            -name "settings.gradle" -o \
+            -name "settings.gradle.kts" \
+          \) -print
+
+          if [ ! -f app/build.gradle ]; then
+            echo "HATA: app/build.gradle bulunamadı."
+            echo "Projedeki Gradle dosyalarının yollarını yukarıdan kontrol et."
+            exit 1
+          fi
+
+          if [ ! -f gradlew ]; then
+            echo "HATA: gradlew bulunamadı."
+            exit 1
+          fi
 
           chmod +x gradlew
 
+          echo "Mevcut sürüm satırları:"
+          grep -nE 'versionCode|versionName' app/build.gradle || true
+
           grep -Eq 'versionCode[[:space:]]+60' app/build.gradle || {
-            echo "HATA: app/build.gradle içinde versionCode 60 bulunamadı."
+            echo "HATA: versionCode 60 bulunamadı."
             exit 1
           }
 
           grep -Eq 'versionName[[:space:]]+"2\.7\.6"' app/build.gradle || {
-            echo "HATA: app/build.gradle içinde versionName 2.7.6 bulunamadı."
+            echo "HATA: versionName 2.7.6 bulunamadı."
             exit 1
           }
 
-          echo "Sürüm kontrolü başarılı."
+          echo "Proje ve sürüm kontrolleri başarılı."   
+
 
       - name: Supabase yapılandırmasını kontrol et
         shell: bash
