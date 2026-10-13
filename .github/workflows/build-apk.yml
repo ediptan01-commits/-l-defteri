@@ -116,7 +116,7 @@ jobs:
           echo "Mevcut sürüm satırları:"
           grep -nE 'versionCode|versionName' app/build.gradle || true
 
-          grep -Eq 'versionCode[[:space:]]+60' app/build.gradle || {
+          grep -Eq 'versionCode[[:space:]]+61' app/build.gradle || {
             echo "HATA: versionCode 60 bulunamadı."
             exit 1
           }
