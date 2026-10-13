@@ -14,45 +14,13 @@ jobs:
   build:
     name: APK ve AAB derle
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 40
+    env:
+      ANDROID_PROJECT_DIR: extracted
 
     steps:
       - name: Kaynak kodunu al
         uses: actions/checkout@v4
-
-      - name: Android kaynak projesini ZIP dosyasından çıkar
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          ZIP="OlcuDefteri-v2.7.6-source-fixed.zip"
-
-          if [ ! -f "$ZIP" ]; then
-            ZIP="OlcuDefteri-v2.7.6-source-fixed-with-build-apk.zip"
-          fi
-
-          if [ ! -f "$ZIP" ]; then
-            echo "HATA: 2.7.6 kaynak ZIP dosyası bulunamadı."
-            exit 1
-          fi
-
-          mkdir -p extracted
-          unzip -q "$ZIP" -d extracted
-
-          echo "Android proje dosyaları aranıyor..."
-
-          GRADLE_FILE="$(find extracted -type f -path '*/app/build.gradle' -print -quit)"
-
-          if [ -z "$GRADLE_FILE" ]; then
-            echo "HATA: ZIP içinde app/build.gradle bulunamadı."
-            find extracted -maxdepth 4 -type f | head -100
-            exit 1
-          fi
-
-          PROJECT_DIR="${GRADLE_FILE%/app/build.gradle}"
-
-          echo "Android proje dizini: $PROJECT_DIR"
-          echo "ANDROID_PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV" 
 
       - name: Java 17 kur
         uses: actions/setup-java@v4
@@ -60,101 +28,34 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Android SDK kur
+        uses: android-actions/setup-android@v3
 
-      - name: Android SDK paketlerini kur
+      - name: Android lisanslarını kabul et ve SDK paketlerini kur
         shell: bash
         run: |
           set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
-
-          if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
-          fi
-
-          if [ -z "${SDKMANAGER:-}" ] || [ ! -x "$SDKMANAGER" ]; then
-            echo "HATA: sdkmanager bulunamadı."
-            echo "ANDROID_HOME=$ANDROID_HOME"
-            find "$ANDROID_HOME" -maxdepth 5 -type f -name sdkmanager || true
-            exit 1
-          fi
-
-          yes | "$SDKMANAGER" --licenses || true
-
-          "$SDKMANAGER" \
-            "platform-tools" \
-            "platforms;android-36" \
-            "build-tools;36.0.0"
-      - name: Proje dosyalarını kontrol et
+      - name: Proje yolunu ve sürümü doğrula
         shell: bash
         run: |
           set -euo pipefail
-
-          echo "Depodaki dosyalar:"
-          ls -la
-          find . -maxdepth 3 \( \
-            -name "build.gradle" -o \
-            -name "build.gradle.kts" -o \
-            -name "gradlew" -o \
-            -name "settings.gradle" -o \
-            -name "settings.gradle.kts" \
-          \) -print
-
-          if [ ! -f app/build.gradle ]; then
-            echo "HATA: app/build.gradle bulunamadı."
-            echo "Projedeki Gradle dosyalarının yollarını yukarıdan kontrol et."
-            exit 1
-          fi
-
-          if [ ! -f gradlew ]; then
-            echo "HATA: gradlew bulunamadı."
-            exit 1
-          fi
-
-          chmod +x gradlew
-
-          echo "Mevcut sürüm satırları:"
-          grep -nE 'versionCode|versionName' app/build.gradle || true
-
-          grep -Eq 'versionCode[[:space:]]+61' app/build.gradle || {
-            echo "HATA: versionCode 60 bulunamadı."
-            exit 1
-          }
-
-          grep -Eq 'versionName[[:space:]]+"2\.7\.6"' app/build.gradle || {
-            echo "HATA: versionName 2.7.6 bulunamadı."
-            exit 1
-          }
-
-          echo "Proje ve sürüm kontrolleri başarılı."   
-
-
-      - name: Supabase yapılandırmasını kontrol et
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          python3 - <<'PY'
+          project_dir="$GITHUB_WORKSPACE/$ANDROID_PROJECT_DIR"
+          test -f "$project_dir/settings.gradle" || { echo "HATA: $project_dir/settings.gradle bulunamadı."; exit 1; }
+          test -f "$project_dir/app/build.gradle" || { echo "HATA: $project_dir/app/build.gradle bulunamadı."; exit 1; }
+          grep -Eq 'versionCode[[:space:]]+61' "$project_dir/app/build.gradle" || { echo 'HATA: versionCode 61 bulunamadı.'; exit 1; }
+          grep -Eq 'versionName[[:space:]]+"2\.7\.6"' "$project_dir/app/build.gradle" || { echo 'HATA: versionName 2.7.6 bulunamadı.'; exit 1; }
+          python3 - "$project_dir/app/src/main/assets/config.json" <<'PY'
           import json
+          import sys
           from pathlib import Path
-
-          p = Path("app/src/main/assets/config.json")
-
-          if not p.is_file():
-              raise SystemExit("HATA: config.json dosyası bulunamadı.")
-
-          cfg = json.loads(p.read_text(encoding="utf-8"))
-
-          required = ["supabaseUrl", "supabaseAnonKey", "redirectUri"]
-          missing = [k for k in required if not cfg.get(k)]
-
+          cfg = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          required = ('supabaseUrl', 'supabaseAnonKey', 'redirectUri')
+          missing = [key for key in required if not cfg.get(key)]
           if missing:
-              raise SystemExit(
-                  "HATA: config.json alanları eksik: "
-                  + ", ".join(missing)
-              )
-
-          print("Yapılandırma kontrolü başarılı.")
+              raise SystemExit('config.json eksik alanlar: ' + ', '.join(missing))
           PY
 
       - name: İmzalama anahtarını hazırla
@@ -163,47 +64,19 @@ jobs:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           set -euo pipefail
-
-          test -n "${KEYSTORE_B64:-}" || {
-            echo "HATA: ANDROID_KEYSTORE_BASE64 secret eksik."
-            exit 1
-          }
-
-          printf '%s' "$KEYSTORE_B64" \
-            | base64 --decode \
-            > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
-
+          : "${KEYSTORE_B64:?ANDROID_KEYSTORE_BASE64 GitHub Actions secret eksik}"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
           test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks"
 
-      - name: İmzalama bilgilerini kontrol et
-        shell: bash
-        env:
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-
-          test -n "${STORE_PASSWORD:-}" || {
-            echo "HATA: ANDROID_KEYSTORE_PASSWORD secret eksik."
-            exit 1
-          }
-
-          test -n "${KEY_ALIAS:-}" || {
-            echo "HATA: ANDROID_KEY_ALIAS secret eksik."
-            exit 1
-          }
-
-          test -n "${KEY_PASSWORD:-}" || {
-            echo "HATA: ANDROID_KEY_PASSWORD secret eksik."
-            exit 1
-          }
-
-      - name: Gradle sürümünü kontrol et
+      - name: Gradle 9.1.0 kur
         shell: bash
         run: |
           set -euo pipefail
-          ./gradlew --version
+          curl --fail --location --retry 3 --retry-delay 2 \
+            https://services.gradle.org/distributions/gradle-9.1.0-bin.zip \
+            --output "$RUNNER_TEMP/gradle-9.1.0-bin.zip"
+          unzip -q "$RUNNER_TEMP/gradle-9.1.0-bin.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-9.1.0/bin" >> "$GITHUB_PATH"
 
       - name: APK ve AAB oluştur
         shell: bash
@@ -213,43 +86,18 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-
-          ./gradlew --no-daemon --stacktrace \
-            clean \
-            assembleRelease \
-            bundleRelease
-
-      - name: Çıktıları doğrula
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          APK="app/build/outputs/apk/release/app-release.apk"
-          AAB="app/build/outputs/bundle/release/app-release.aab"
-
-          test -s "$APK" || {
-            echo "HATA: APK oluşturulamadı."
-            exit 1
-          }
-
-          test -s "$AAB" || {
-            echo "HATA: AAB oluşturulamadı."
-            exit 1
-          }
-
-          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
-
-          "$APKSIGNER" verify --verbose "$APK"
-
-          echo "APK ve AAB oluşturuldu."
-          ls -lh "$APK" "$AAB"
+          : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD secret eksik}"
+          : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS secret eksik}"
+          : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD secret eksik}"
+          gradle --version
+          gradle --no-daemon --stacktrace -p "$GITHUB_WORKSPACE/$ANDROID_PROJECT_DIR" clean assembleRelease bundleRelease
 
       - name: APK ve AAB dosyalarını yükle
         uses: actions/upload-artifact@v4
         with:
           name: OlcuDefteri-v2.7.6-release
           path: |
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/bundle/release/app-release.aab
+            extracted/app/build/outputs/apk/release/app-release.apk
+            extracted/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14
