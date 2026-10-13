@@ -20,6 +20,40 @@ jobs:
       - name: Kaynak kodunu al
         uses: actions/checkout@v4
 
+      - name: Android kaynak projesini ZIP dosyasından çıkar
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ZIP="OlcuDefteri-v2.7.6-source-fixed.zip"
+
+          if [ ! -f "$ZIP" ]; then
+            ZIP="OlcuDefteri-v2.7.6-source-fixed-with-build-apk.zip"
+          fi
+
+          if [ ! -f "$ZIP" ]; then
+            echo "HATA: 2.7.6 kaynak ZIP dosyası bulunamadı."
+            exit 1
+          fi
+
+          mkdir -p extracted
+          unzip -q "$ZIP" -d extracted
+
+          echo "Android proje dosyaları aranıyor..."
+
+          GRADLE_FILE="$(find extracted -type f -path '*/app/build.gradle' -print -quit)"
+
+          if [ -z "$GRADLE_FILE" ]; then
+            echo "HATA: ZIP içinde app/build.gradle bulunamadı."
+            find extracted -maxdepth 4 -type f | head -100
+            exit 1
+          fi
+
+          PROJECT_DIR="${GRADLE_FILE%/app/build.gradle}"
+
+          echo "Android proje dizini: $PROJECT_DIR"
+          echo "ANDROID_PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV" 
+
       - name: Java 17 kur
         uses: actions/setup-java@v4
         with:
