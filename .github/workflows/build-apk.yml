@@ -25,97 +25,71 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Android SDK kur
         uses: android-actions/setup-android@v3
 
-      - name: Android lisanslarını ve SDK paketlerini hazırla
+      - name: Android SDK paketlerini kur
         shell: bash
         run: |
           set -euo pipefail
-
-          yes | sdkmanager --licenses >/dev/null
-
+          yes | sdkmanager --licenses >/dev/null || true
           sdkmanager \
             "platform-tools" \
             "platforms;android-36" \
             "build-tools;36.0.0"
 
-      - name: Sürüm ve proje dosyalarını doğrula
+      - name: Proje dosyalarını kontrol et
         shell: bash
         run: |
           set -euo pipefail
 
-          test -f build.gradle
-          test -f settings.gradle
           test -f app/build.gradle
-          test -f app/src/main/AndroidManifest.xml
-          test -f app/src/main/assets/config.json
+          test -f settings.gradle
+          test -f build.gradle
+          test -f gradlew
 
-          grep -Eq "versionCode[[:space:]]+60" app/build.gradle
-          grep -Eq 'versionName[[:space:]]+"2\.7\.6"' app/build.gradle
+          chmod +x gradlew
 
-          echo "Sürüm kontrolü:"
-          grep -E 'versionCode|versionName' app/build.gradle
+          grep -Eq 'versionCode[[:space:]]+60' app/build.gradle || {
+            echo "HATA: app/build.gradle içinde versionCode 60 bulunamadı."
+            exit 1
+          }
+
+          grep -Eq 'versionName[[:space:]]+"2\.7\.6"' app/build.gradle || {
+            echo "HATA: app/build.gradle içinde versionName 2.7.6 bulunamadı."
+            exit 1
+          }
+
+          echo "Sürüm kontrolü başarılı."
+
+      - name: Supabase yapılandırmasını kontrol et
+        shell: bash
+        run: |
+          set -euo pipefail
 
           python3 - <<'PY'
           import json
           from pathlib import Path
 
-          path = Path("app/src/main/assets/config.json")
-          config = json.loads(path.read_text(encoding="utf-8"))
+          p = Path("app/src/main/assets/config.json")
 
-          required = (
-              "supabaseUrl",
-              "supabaseAnonKey",
-              "redirectUri",
-          )
+          if not p.is_file():
+              raise SystemExit("HATA: config.json dosyası bulunamadı.")
 
-          missing = [
-              key for key in required
-              if not isinstance(config.get(key), str)
-              or not config[key].strip()
-          ]
+          cfg = json.loads(p.read_text(encoding="utf-8"))
+
+          required = ["supabaseUrl", "supabaseAnonKey", "redirectUri"]
+          missing = [k for k in required if not cfg.get(k)]
 
           if missing:
               raise SystemExit(
-                  "config.json alanları eksik: "
+                  "HATA: config.json alanları eksik: "
                   + ", ".join(missing)
               )
 
-          print("config.json kontrolü başarılı.")
+          print("Yapılandırma kontrolü başarılı.")
           PY
-
-      - name: İmzalama Secrets bilgilerini kontrol et
-        shell: bash
-        env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          set -euo pipefail
-
-          test -n "${KEYSTORE_B64:-}" || {
-            echo "ANDROID_KEYSTORE_BASE64 tanımlı değil."
-            exit 1
-          }
-
-          test -n "${KEYSTORE_PASSWORD:-}" || {
-            echo "ANDROID_KEYSTORE_PASSWORD tanımlı değil."
-            exit 1
-          }
-
-          test -n "${KEY_ALIAS:-}" || {
-            echo "ANDROID_KEY_ALIAS tanımlı değil."
-            exit 1
-          }
-
-          test -n "${KEY_PASSWORD:-}" || {
-            echo "ANDROID_KEY_PASSWORD tanımlı değil."
-            exit 1
-          }
 
       - name: İmzalama anahtarını hazırla
         shell: bash
@@ -124,39 +98,46 @@ jobs:
         run: |
           set -euo pipefail
 
+          test -n "${KEYSTORE_B64:-}" || {
+            echo "HATA: ANDROID_KEYSTORE_BASE64 secret eksik."
+            exit 1
+          }
+
           printf '%s' "$KEYSTORE_B64" \
             | base64 --decode \
             > "$GITHUB_WORKSPACE/olcudefteri-release.jks"
 
           test -s "$GITHUB_WORKSPACE/olcudefteri-release.jks"
 
-      - name: Gradle 9.1.0 kur
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          curl --fail --location --retry 3 \
-            --retry-delay 2 \
-            https://services.gradle.org/distributions/gradle-9.1.0-bin.zip \
-            --output "$RUNNER_TEMP/gradle-9.1.0-bin.zip"
-
-          unzip -q "$RUNNER_TEMP/gradle-9.1.0-bin.zip" \
-            -d "$RUNNER_TEMP"
-
-          echo "$RUNNER_TEMP/gradle-9.1.0/bin" >> "$GITHUB_PATH"
-
-      - name: Gradle ve Android yapılandırmasını kontrol et
+      - name: İmzalama bilgilerini kontrol et
         shell: bash
         env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
 
-          gradle --version
+          test -n "${STORE_PASSWORD:-}" || {
+            echo "HATA: ANDROID_KEYSTORE_PASSWORD secret eksik."
+            exit 1
+          }
 
-          gradle --no-daemon --stacktrace tasks --all
+          test -n "${KEY_ALIAS:-}" || {
+            echo "HATA: ANDROID_KEY_ALIAS secret eksik."
+            exit 1
+          }
+
+          test -n "${KEY_PASSWORD:-}" || {
+            echo "HATA: ANDROID_KEY_PASSWORD secret eksik."
+            exit 1
+          }
+
+      - name: Gradle sürümünü kontrol et
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --version
 
       - name: APK ve AAB oluştur
         shell: bash
@@ -167,12 +148,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          gradle --no-daemon --stacktrace \
+          ./gradlew --no-daemon --stacktrace \
             clean \
             assembleRelease \
             bundleRelease
 
-      - name: Üretilen dosyaları ve APK imzasını doğrula
+      - name: Çıktıları doğrula
         shell: bash
         run: |
           set -euo pipefail
@@ -180,15 +161,21 @@ jobs:
           APK="app/build/outputs/apk/release/app-release.apk"
           AAB="app/build/outputs/bundle/release/app-release.aab"
 
-          test -s "$APK"
-          test -s "$AAB"
+          test -s "$APK" || {
+            echo "HATA: APK oluşturulamadı."
+            exit 1
+          }
+
+          test -s "$AAB" || {
+            echo "HATA: AAB oluşturulamadı."
+            exit 1
+          }
 
           APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
 
-          test -x "$APKSIGNER"
           "$APKSIGNER" verify --verbose "$APK"
 
-          echo "APK ve AAB dosyaları oluşturuldu."
+          echo "APK ve AAB oluşturuldu."
           ls -lh "$APK" "$AAB"
 
       - name: APK ve AAB dosyalarını yükle
