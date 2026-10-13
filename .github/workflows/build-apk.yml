@@ -26,8 +26,6 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Android SDK kur
-        uses: android-actions/setup-android@v3
 
       - name: Android SDK paketlerini kur
         shell: bash
