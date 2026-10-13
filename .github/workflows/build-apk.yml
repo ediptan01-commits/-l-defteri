@@ -47,21 +47,39 @@ jobs:
           fi
           "$sdkmanager" --sdk_root="$sdk_root" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Proje yolunu bul ve sürümü doğrula
+      - name: Kaynak projeyi bul ve sürümü doğrula
         id: project_root
         shell: bash
         run: |
           set -euo pipefail
           project_dir="$GITHUB_WORKSPACE/$ANDROID_PROJECT_DIR"
-          if [[ ! -f "$project_dir/app/build.gradle" ]]; then
+          app_gradle=""
+          if [[ -f "$project_dir/app/build.gradle" ]]; then
+            app_gradle="$project_dir/app/build.gradle"
+          else
             app_gradle="$(find "$GITHUB_WORKSPACE" -type f -path '*/app/build.gradle' -not -path '*/.git/*' -print -quit)"
-            if [[ -z "$app_gradle" ]]; then
-              echo 'HATA: app/build.gradle depo içinde bulunamadı.'
-              find "$GITHUB_WORKSPACE" -maxdepth 5 \( -name build.gradle -o -name settings.gradle \) -print
-              exit 1
-            fi
-            project_dir="${app_gradle%/app/build.gradle}"
           fi
+          if [[ -z "$app_gradle" ]]; then
+            archive_dir="$GITHUB_WORKSPACE/.android-build-source"
+            for archive in "$GITHUB_WORKSPACE"/OlcuDefteri-v2.7.6-*.zip; do
+              [[ -f "$archive" ]] || continue
+              rm -rf "$archive_dir"
+              mkdir -p "$archive_dir"
+              echo "Kaynak arşivi açılıyor: $(basename "$archive")"
+              unzip -q "$archive" -d "$archive_dir"
+              candidate="$(find "$archive_dir" -type f -path '*/app/build.gradle' -print -quit)"
+              if [[ -n "$candidate" ]] && grep -Eq 'versionCode[[:space:]]+61' "$candidate" && grep -Eq 'versionName[[:space:]]+"2\.7\.6"' "$candidate"; then
+                app_gradle="$candidate"
+                break
+              fi
+            done
+          fi
+          if [[ -z "$app_gradle" ]]; then
+            echo 'HATA: versionCode 61 / versionName 2.7.6 içeren kaynak proje bulunamadı.'
+            find "$GITHUB_WORKSPACE" -maxdepth 5 \( -name '*.zip' -o -name build.gradle -o -name settings.gradle \) -print
+            exit 1
+          fi
+          project_dir="${app_gradle%/app/build.gradle}"
           if [[ ! -f "$project_dir/settings.gradle" && ! -f "$project_dir/settings.gradle.kts" ]]; then
             echo "Uyarı: $project_dir içinde settings.gradle yok; Android proje ayarları oluşturuluyor."
             cat > "$project_dir/settings.gradle" <<'GRADLE'
@@ -129,6 +147,7 @@ jobs:
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14
+
 
 
 
