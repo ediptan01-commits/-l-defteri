@@ -26,16 +26,34 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-   
+      - name: Android SDK kur
+        uses: android-actions/setup-android@v3
+
       - name: Android SDK paketlerini kur
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager \
+
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          fi
+
+          if [ -z "${SDKMANAGER:-}" ] || [ ! -x "$SDKMANAGER" ]; then
+            echo "HATA: sdkmanager bulunamadı."
+            echo "ANDROID_HOME=$ANDROID_HOME"
+            find "$ANDROID_HOME" -maxdepth 5 -type f -name sdkmanager || true
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" \
             "platform-tools" \
             "platforms;android-36" \
             "build-tools;36.0.0"
+      
 
       - name: Proje dosyalarını kontrol et
         shell: bash
