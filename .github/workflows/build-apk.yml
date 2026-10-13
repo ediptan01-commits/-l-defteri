@@ -47,15 +47,35 @@ jobs:
           fi
           "$sdkmanager" --sdk_root="$sdk_root" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Proje yolunu ve sürümü doğrula
+      - name: Proje yolunu bul ve sürümü doğrula
+        id: project_root
         shell: bash
         run: |
           set -euo pipefail
           project_dir="$GITHUB_WORKSPACE/$ANDROID_PROJECT_DIR"
-          test -f "$project_dir/settings.gradle" || { echo "HATA: $project_dir/settings.gradle bulunamadı."; exit 1; }
-          test -f "$project_dir/app/build.gradle" || { echo "HATA: $project_dir/app/build.gradle bulunamadı."; exit 1; }
+          if [[ ! -f "$project_dir/app/build.gradle" ]]; then
+            app_gradle="$(find "$GITHUB_WORKSPACE" -type f -path '*/app/build.gradle' -not -path '*/.git/*' -print -quit)"
+            if [[ -z "$app_gradle" ]]; then
+              echo 'HATA: app/build.gradle depo içinde bulunamadı.'
+              find "$GITHUB_WORKSPACE" -maxdepth 5 \( -name build.gradle -o -name settings.gradle \) -print
+              exit 1
+            fi
+            project_dir="${app_gradle%/app/build.gradle}"
+          fi
+          if [[ ! -f "$project_dir/settings.gradle" && ! -f "$project_dir/settings.gradle.kts" ]]; then
+            echo "Uyarı: $project_dir içinde settings.gradle yok; Android proje ayarları oluşturuluyor."
+            cat > "$project_dir/settings.gradle" <<'GRADLE'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+          rootProject.name='OlcuDefteri'
+          include ':app'
+          GRADLE
+          fi
           grep -Eq 'versionCode[[:space:]]+61' "$project_dir/app/build.gradle" || { echo 'HATA: versionCode 61 bulunamadı.'; exit 1; }
           grep -Eq 'versionName[[:space:]]+"2\.7\.6"' "$project_dir/app/build.gradle" || { echo 'HATA: versionName 2.7.6 bulunamadı.'; exit 1; }
+          project_dir_rel="${project_dir#"$GITHUB_WORKSPACE"/}"
+          printf 'ANDROID_PROJECT_DIR=%s\n' "$project_dir_rel" >> "$GITHUB_ENV"
+          printf 'project_dir=%s\n' "$project_dir_rel" >> "$GITHUB_OUTPUT"
           python3 - "$project_dir/app/src/main/assets/config.json" <<'PY'
           import json
           import sys
@@ -66,7 +86,6 @@ jobs:
           if missing:
               raise SystemExit('config.json eksik alanlar: ' + ', '.join(missing))
           PY
-
       - name: İmzalama anahtarını hazırla
         shell: bash
         env:
@@ -106,9 +125,12 @@ jobs:
         with:
           name: OlcuDefteri-v2.7.6-release
           path: |
-            extracted/app/build/outputs/apk/release/app-release.apk
-            extracted/app/build/outputs/bundle/release/app-release.aab
+            ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/apk/release/app-release.apk
+            ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14
+
+
+
 
 
