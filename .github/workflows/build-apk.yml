@@ -1,4 +1,4 @@
-name: Olcu Defteri 2.7.4 - APK ve AAB
+name: Olcu Defteri 2.7.5 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -19,11 +19,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: 2.7.4 kaynak ZIP'ini çıkart
+      - name: 2.7.5 kaynak ZIP'ini çıkart
         shell: bash
         run: |
           set -euo pipefail
-          ZIP="./OlcuDefteri-v2.7.4-release-source.zip"
+          ZIP="./OlcuDefteri-v2.7.5-AdMob-source.zip"
           if [[ ! -f "$ZIP" ]]; then
             echo "Kaynak ZIP bulunamadı: $ZIP"
             ls -la
@@ -39,10 +39,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Eq 'versionCode[[:space:]]+58' app/build.gradle
-          grep -Eq 'versionName[[:space:]]+"2\.7\.4"' app/build.gradle
+          grep -Eq 'versionCode[[:space:]]+59' app/build.gradle
+          grep -Eq 'versionName[[:space:]]+"2\.7\.5"' app/build.gradle
           grep -q "applicationId 'com.olcudefteri.app'" app/build.gradle
-          echo "Sürüm 2.7.4 (versionCode 58) doğrulandı."
+          echo "Sürüm 2.7.5 (versionCode 59) doğrulandı."
 
       - name: Supabase ayarlarını ekle
         env:
@@ -111,7 +111,7 @@ jobs:
       - name: APK ve AAB dosyalarını yayımla
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.4-release
+          name: OlcuDefteri-v2.7.5-release
           path: |
             app/build/outputs/apk/release/app-release.apk
             app/build/outputs/bundle/release/app-release.aab
