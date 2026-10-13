@@ -28,13 +28,24 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Android SDK kur
+        uses: android-actions/setup-android@v4
 
-      - name: Android lisanslarını kabul et ve SDK paketlerini kur
+      - name: Android SDK paketlerini kur
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          sdkmanager="$(command -v sdkmanager || true)"
+          if [[ -z "$sdkmanager" ]]; then
+            sdkmanager="$(find "$sdk_root/cmdline-tools" -mindepth 3 -maxdepth 3 -type f -name sdkmanager -print -quit 2>/dev/null || true)"
+          fi
+          if [[ -z "$sdkmanager" || ! -x "$sdkmanager" ]]; then
+            echo "HATA: sdkmanager bulunamadı. SDK kökü: $sdk_root"
+            find "$sdk_root" -maxdepth 4 -type f -name sdkmanager -print 2>/dev/null || true
+            exit 1
+          fi
+          "$sdkmanager" --sdk_root="$sdk_root" "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Proje yolunu ve sürümü doğrula
         shell: bash
@@ -99,3 +110,5 @@ jobs:
             extracted/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14
+
+
