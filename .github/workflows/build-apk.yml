@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ZIP="./OlcuDefteri-v2.7.5-AdMob-source.zip"
+          ZIP="./OlcuDefteri-v2.7.5-AdMob-source-FIX1.zip"
           if [[ ! -f "$ZIP" ]]; then
             echo "Kaynak ZIP bulunamadı: $ZIP"
             ls -la
