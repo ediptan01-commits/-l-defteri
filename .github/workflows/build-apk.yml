@@ -61,7 +61,7 @@ jobs:
           fi
           if [[ -z "$app_gradle" ]]; then
             archive_dir="$GITHUB_WORKSPACE/android-build-source"
-            for archive in "$GITHUB_WORKSPACE"/OlcuDefteri-v2.7.6-*.zip; do
+            for archive in "$GITHUB_WORKSPACE"/OlcuDefteri-v2.7.7-*.zip; do
               [[ -f "$archive" ]] || continue
               rm -rf "$archive_dir"
               mkdir -p "$archive_dir"
