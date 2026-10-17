@@ -104,7 +104,7 @@ jobs:
           echo "ANDROID_PROJECT_DIR=$project_dir" >> "$GITHUB_ENV"
           echo "project_dir=$project_dir" >> "$GITHUB_OUTPUT"
           echo "Kaynak proje: $project_dir"
-          echo "Sürüm: 2.7.9 (63)"
+          echo "Sürüm: 2.7.10 (64)"
 
       - name: İmzalama anahtarını hazırla
         shell: bash
