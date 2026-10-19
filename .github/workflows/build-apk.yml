@@ -44,8 +44,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          archive="OlcuDefteri-v2.7.13-kararlilik.zip"
-
+          archive="OlcuDefteri-v2.7.13-native-google-login.zip"
           if [[ ! -f "$GITHUB_WORKSPACE/$archive" ]]; then
             echo "HATA: $archive bulunamadı."
             echo "Depodaki 2.7.13 ZIP dosyaları:"
