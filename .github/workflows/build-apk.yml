@@ -1,4 +1,4 @@
-name: Olcu Defteri 2.7.12 - APK ve AAB
+name: Olcu Defteri 2.7.13 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -44,12 +44,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          archive="OlcuDefteri-v2.7.12-R8-bildirim-duzeltme.zip"
+          archive="OlcuDefteri-v2.7.13-kararlilik.zip"
 
           if [[ ! -f "$GITHUB_WORKSPACE/$archive" ]]; then
             echo "HATA: $archive bulunamadı."
-            echo "Depodaki 2.7.12 ZIP dosyaları:"
-            find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name 'OlcuDefteri-v2.7.12-*.zip' -printf '%f\n'
+            echo "Depodaki 2.7.13 ZIP dosyaları:"
+            find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name 'OlcuDefteri-v2.7.13-*.zip' -printf '%f\n'
             exit 1
           fi
 
@@ -66,14 +66,14 @@ jobs:
 
           project_dir="${app_gradle%/app/build.gradle}"
 
-          grep -Eq 'versionCode[[:space:]]+66' "$app_gradle" || {
-            echo "HATA: versionCode 66 bulunamadı."
+          grep -Eq 'versionCode[[:space:]]+67' "$app_gradle" || {
+            echo "HATA: versionCode 67 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
 
-          grep -Eq 'versionName[[:space:]]+"2\.7\.12"' "$app_gradle" || {
-            echo "HATA: versionName 2.7.12 bulunamadı."
+          grep -Eq 'versionName[[:space:]]+"2\.7\.13"' "$app_gradle" || {
+            echo "HATA: versionName 2.7.13 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
@@ -104,7 +104,7 @@ jobs:
           echo "ANDROID_PROJECT_DIR=$project_dir" >> "$GITHUB_ENV"
           echo "project_dir=$project_dir" >> "$GITHUB_OUTPUT"
           echo "Kaynak proje: $project_dir"
-          echo "Sürüm: 2.7.12 (66)"
+          echo "Sürüm: 2.7.13 (67)"
 
       - name: İmzalama anahtarını hazırla
         shell: bash
@@ -153,7 +153,7 @@ jobs:
       - name: APK ve AAB dosyalarını yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.12-release
+          name: OlcuDefteri-v2.7.13-release
           path: |
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/apk/release/app-release.apk
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/bundle/release/app-release.aab
