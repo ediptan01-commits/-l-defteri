@@ -1,4 +1,4 @@
-name: Olcu Defteri 2.7.14 - APK ve AAB
+name: Olcu Defteri 2.7.15 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -44,10 +44,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          archive="OlcuDefteri-v2.7.14-google-giris-tani.zip"
+          archive="OlcuDefteri-v2.7.15-google-giris-duzeltme.zip"
           if [[ ! -f "$GITHUB_WORKSPACE/$archive" ]]; then
             echo "HATA: $archive bulunamadı."
-            echo "Depodaki 2.7.13 ZIP dosyaları:"
+            echo "Depodaki 2.7.15 ZIP dosyaları:"
             find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name 'OlcuDefteri-v2.7.14-*.zip' -printf '%f\n'
             exit 1
           fi
@@ -65,14 +65,14 @@ jobs:
 
           project_dir="${app_gradle%/app/build.gradle}"
 
-          grep -Eq 'versionCode[[:space:]]+68' "$app_gradle" || {
-            echo "HATA: versionCode 68 bulunamadı."
+          grep -Eq 'versionCode[[:space:]]+69' "$app_gradle" || {
+            echo "HATA: versionCode 69 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
 
-          grep -Eq 'versionName[[:space:]]+"2\.7\.14"' "$app_gradle" || {
-            echo "HATA: versionName 2.7.14 bulunamadı."
+          grep -Eq 'versionName[[:space:]]+"2\.7\.15"' "$app_gradle" || {
+            echo "HATA: versionName 2.7.15 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
@@ -103,7 +103,7 @@ jobs:
           echo "ANDROID_PROJECT_DIR=$project_dir" >> "$GITHUB_ENV"
           echo "project_dir=$project_dir" >> "$GITHUB_OUTPUT"
           echo "Kaynak proje: $project_dir"
-          echo "Sürüm: 2.7.14 (68)"
+          echo "Sürüm: 2.7.15 (69)"
 
       - name: İmzalama anahtarını hazırla
         shell: bash
@@ -152,7 +152,7 @@ jobs:
       - name: APK ve AAB dosyalarını yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.14-release
+          name: OlcuDefteri-v2.7.15-release
           path: |
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/apk/release/app-release.apk
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/bundle/release/app-release.aab
