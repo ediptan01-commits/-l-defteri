@@ -70,7 +70,7 @@ jobs:
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
-          grep -Eq 'versionName[[:space:]]+"2\.7\.23"' "$app_gradle" || {
+          grep -Eq 'versionName[[:space:]]+"2\.7\.24"' "$app_gradle" || {
             echo "HATA: versionName 2.7.24 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
