@@ -1,4 +1,4 @@
-name: Olcu Defteri 2.7.22 - APK ve AAB
+name: Olcu Defteri 2.7.23 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -44,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          archive="OlcuDefteri-v2.7.22-google-giris-beklemesiz.zip"
+          archive="OlcuDefteri-v2.7.23-google-giris-10sn.zip"
           archive_path="$GITHUB_WORKSPACE/$archive"
           if [[ ! -f "$archive_path" ]]; then
             echo "HATA: Depo kökünde beklenen kaynak ZIP bulunamadı: $archive"
@@ -65,13 +65,13 @@ jobs:
           fi
           project_dir="${app_gradle%/app/build.gradle}"
 
-          grep -Eq 'versionCode[[:space:]]+76' "$app_gradle" || {
-            echo "HATA: versionCode 76 bulunamadı."
+          grep -Eq 'versionCode[[:space:]]+77' "$app_gradle" || {
+            echo "HATA: versionCode 77 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
-          grep -Eq 'versionName[[:space:]]+"2\.7\.22"' "$app_gradle" || {
-            echo "HATA: versionName 2.7.22 bulunamadı."
+          grep -Eq 'versionName[[:space:]]+"2\.7\.23"' "$app_gradle" || {
+            echo "HATA: versionName 2.7.23 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
@@ -114,7 +114,7 @@ jobs:
           echo "ANDROID_PROJECT_DIR=$project_dir" >> "$GITHUB_ENV"
           echo "project_dir=$project_dir" >> "$GITHUB_OUTPUT"
           echo "Kaynak proje: $project_dir"
-          echo "Sürüm: 2.7.22 (76)"
+          echo "Sürüm: 2.7.23 (77)"
 
       - name: İmzalama anahtarını hazırla
         shell: bash
@@ -157,7 +157,7 @@ jobs:
       - name: APK ve AAB dosyalarını yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.22-release
+          name: OlcuDefteri-v2.7.23-release
           path: |
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/apk/release/app-release.apk
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/bundle/release/app-release.aab
