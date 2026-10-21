@@ -1,4 +1,4 @@
-name: Olcu Defteri 2.7.17 - APK ve AAB
+name: Olcu Defteri 2.7.18 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -44,13 +44,15 @@ jobs:
         run: |
           set -euo pipefail
 
-          archive="OlcuDefteri-v2.7.17-google-giris-yedekli.zip"
-          if [[ ! -f "$GITHUB_WORKSPACE/$archive" ]]; then
-            echo "HATA: $archive bulunamadı."
-            echo "Depodaki 2.7.17 ZIP dosyaları:"
-            find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name 'OlcuDefteri-v2.7.17-*.zip' -printf '%f\n'
+          # Nokta (v2.7.18) veya alt çizgi (v2_7_18) ile yazılmış ZIP adını kabul eder.
+          archive="$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name 'OlcuDefteri-v2[._]7[._]18-*.zip' -printf '%f\n' | sort | head -n 1)"
+          if [[ -z "$archive" ]]; then
+            echo "HATA: Depoda OlcuDefteri-v2.7.18-*.zip bulunamadı."
+            echo "Depo kökündeki ZIP dosyaları:"
+            find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name '*.zip' -printf '%f\n'
             exit 1
           fi
+          echo "Kullanılan ZIP: $archive"
 
           source_dir="$RUNNER_TEMP/olcu-defteri-source"
           mkdir -p "$source_dir"
@@ -65,14 +67,14 @@ jobs:
 
           project_dir="${app_gradle%/app/build.gradle}"
 
-          grep -Eq 'versionCode[[:space:]]+71' "$app_gradle" || {
-            echo "HATA: versionCode 71 bulunamadı."
+          grep -Eq 'versionCode[[:space:]]+72' "$app_gradle" || {
+            echo "HATA: versionCode 72 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
 
-          grep -Eq 'versionName[[:space:]]+"2\.7\.17"' "$app_gradle" || {
-            echo "HATA: versionName 2.7.17 bulunamadı."
+          grep -Eq 'versionName[[:space:]]+"2\.7\.18"' "$app_gradle" || {
+            echo "HATA: versionName 2.7.18 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
@@ -88,7 +90,7 @@ jobs:
           from pathlib import Path
 
           cfg = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-          required = ("supabaseUrl", "supabaseAnonKey", "redirectUri")
+          required = ("supabaseUrl", "supabaseAnonKey", "redirectUri", "googleWebClientId")
           missing = [key for key in required if not cfg.get(key)]
           if missing:
               raise SystemExit("config.json eksik alanlar: " + ", ".join(missing))
@@ -103,7 +105,7 @@ jobs:
           echo "ANDROID_PROJECT_DIR=$project_dir" >> "$GITHUB_ENV"
           echo "project_dir=$project_dir" >> "$GITHUB_OUTPUT"
           echo "Kaynak proje: $project_dir"
-          echo "Sürüm: 2.7.17 (71)"
+          echo "Sürüm: 2.7.18 (72)"
 
       - name: İmzalama anahtarını hazırla
         shell: bash
@@ -152,7 +154,7 @@ jobs:
       - name: APK ve AAB dosyalarını yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.17-release
+          name: OlcuDefteri-v2.7.18-release
           path: |
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/apk/release/app-release.apk
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/bundle/release/app-release.aab
