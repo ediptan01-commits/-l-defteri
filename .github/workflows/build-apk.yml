@@ -1,4 +1,4 @@
-name: Olcu Defteri 2.7.18 - APK ve AAB
+name: Olcu Defteri 2.7.19 - APK ve AAB
 
 on:
   workflow_dispatch:
@@ -44,47 +44,54 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Nokta (v2.7.18) veya alt çizgi (v2_7_18) ile yazılmış ZIP adını kabul eder.
-          archive="$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name 'OlcuDefteri-v2[._]7[._]18-*.zip' -printf '%f\n' | sort | head -n 1)"
-          if [[ -z "$archive" ]]; then
-            echo "HATA: Depoda OlcuDefteri-v2.7.18-*.zip bulunamadı."
+          archive="OlcuDefteri-v2.7.19-google-giris-reauth-duzeltme.zip"
+          archive_path="$GITHUB_WORKSPACE/$archive"
+          if [[ ! -f "$archive_path" ]]; then
+            echo "HATA: Depo kökünde beklenen kaynak ZIP bulunamadı: $archive"
             echo "Depo kökündeki ZIP dosyaları:"
-            find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name '*.zip' -printf '%f\n'
+            find "$GITHUB_WORKSPACE" -maxdepth 1 -type f -name '*.zip' -printf '%f\n' | sort
             exit 1
           fi
           echo "Kullanılan ZIP: $archive"
 
           source_dir="$RUNNER_TEMP/olcu-defteri-source"
           mkdir -p "$source_dir"
-          unzip -q "$GITHUB_WORKSPACE/$archive" -d "$source_dir"
+          unzip -q "$archive_path" -d "$source_dir"
 
           app_gradle="$(find "$source_dir" -type f -path '*/app/build.gradle' -print -quit)"
-
           if [[ -z "$app_gradle" ]]; then
             echo "HATA: ZIP içinde app/build.gradle bulunamadı."
             exit 1
           fi
-
           project_dir="${app_gradle%/app/build.gradle}"
 
-          grep -Eq 'versionCode[[:space:]]+72' "$app_gradle" || {
-            echo "HATA: versionCode 72 bulunamadı."
+          grep -Eq 'versionCode[[:space:]]+73' "$app_gradle" || {
+            echo "HATA: versionCode 73 bulunamadı."
+            grep -nE 'versionCode|versionName' "$app_gradle" || true
+            exit 1
+          }
+          grep -Eq 'versionName[[:space:]]+"2\.7\.19"' "$app_gradle" || {
+            echo "HATA: versionName 2.7.19 bulunamadı."
             grep -nE 'versionCode|versionName' "$app_gradle" || true
             exit 1
           }
 
-          grep -Eq 'versionName[[:space:]]+"2\.7\.18"' "$app_gradle" || {
-            echo "HATA: versionName 2.7.18 bulunamadı."
-            grep -nE 'versionCode|versionName' "$app_gradle" || true
+          main_activity="$project_dir/app/src/main/java/com/olcudefteri/app/MainActivity.java"
+          test -f "$main_activity" || {
+            echo "HATA: MainActivity.java bulunamadı."
+            exit 1
+          }
+          grep -Fq 'account reauth failed' "$main_activity" || {
+            echo "HATA: Google yeniden doğrulama düzeltmesi kaynakta bulunamadı."
             exit 1
           }
 
-          test -f "$project_dir/app/src/main/assets/config.json" || {
+          config="$project_dir/app/src/main/assets/config.json"
+          test -f "$config" || {
             echo "HATA: config.json bulunamadı."
             exit 1
           }
-
-          python3 - "$project_dir/app/src/main/assets/config.json" <<'PY'
+          python3 - "$config" <<'PY'
           import json
           import sys
           from pathlib import Path
@@ -94,6 +101,8 @@ jobs:
           missing = [key for key in required if not cfg.get(key)]
           if missing:
               raise SystemExit("config.json eksik alanlar: " + ", ".join(missing))
+          if not cfg["googleWebClientId"].endswith(".apps.googleusercontent.com"):
+              raise SystemExit("Google Web istemci kimliği geçersiz görünüyor.")
           print("config.json kontrolü başarılı.")
           PY
 
@@ -105,7 +114,7 @@ jobs:
           echo "ANDROID_PROJECT_DIR=$project_dir" >> "$GITHUB_ENV"
           echo "project_dir=$project_dir" >> "$GITHUB_OUTPUT"
           echo "Kaynak proje: $project_dir"
-          echo "Sürüm: 2.7.18 (72)"
+          echo "Sürüm: 2.7.19 (73)"
 
       - name: İmzalama anahtarını hazırla
         shell: bash
@@ -136,25 +145,19 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-
           : "${ANDROID_KEYSTORE_PASSWORD:?ANDROID_KEYSTORE_PASSWORD secret eksik}"
           : "${ANDROID_KEY_ALIAS:?ANDROID_KEY_ALIAS secret eksik}"
           : "${ANDROID_KEY_PASSWORD:?ANDROID_KEY_PASSWORD secret eksik}"
 
           gradle --version
-
           gradle --no-daemon --stacktrace \
             -p "$ANDROID_PROJECT_DIR" \
-            -Pandroid.injected.signing.store.file="$ANDROID_KEYSTORE_FILE" \
-            -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
-            -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD" \
             clean assembleRelease bundleRelease
 
       - name: APK ve AAB dosyalarını yükle
         uses: actions/upload-artifact@v4
         with:
-          name: OlcuDefteri-v2.7.18-release
+          name: OlcuDefteri-v2.7.19-release
           path: |
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/apk/release/app-release.apk
             ${{ steps.project_root.outputs.project_dir }}/app/build/outputs/bundle/release/app-release.aab
