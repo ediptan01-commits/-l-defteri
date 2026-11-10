@@ -1,0 +1,20 @@
+# Sensitive Android signing materials
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*KEYSTORE*BASE64*.txt
+key.properties
+local.properties
+.env
+.env.*
+!.env.example
+
+# Build outputs and local settings
+.gradle/
+build/
+**/build/
+.idea/
+*.iml
